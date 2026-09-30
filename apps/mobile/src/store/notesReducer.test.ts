@@ -65,6 +65,11 @@ describe('notesReducer', () => {
     expect(next.notes.find(item => item.id === note.id)?.title).toBe(note.title);
   });
 
+  it('removes server-deleted notes even when an offline local edit is newer', () => {
+    const next = notesReducer(state, {type: 'syncMerge', notes: [], acknowledgedDeletions: [], remoteDeletions: [note.id]});
+    expect(next.notes).toEqual([]);
+  });
+
   it('retains the compose draft through hydration and clears it after saving', () => {
     const draft = {title: 'Unfinished', body: 'A thought', tags: '', icon: 'spark' as const, accent: '#72B8FF'};
     const next = notesReducer(state, {type: 'hydrate', ...state, composeDraft: draft});

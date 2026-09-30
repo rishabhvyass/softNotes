@@ -15,7 +15,7 @@ export type NotesAction =
   | {type: 'hydrate'; notes: Note[]; settings: AppSettings; pendingDeletions: string[]; composeDraft?: ComposeDraft | null}
   | {type: 'create'; note: Note}
   | {type: 'update'; id: string; patch: NotePatch; updatedAt: string}
-  | {type: 'syncMerge'; notes: Note[]; acknowledgedDeletions: string[]}
+  | {type: 'syncMerge'; notes: Note[]; acknowledgedDeletions: string[]; remoteDeletions?: string[]}
   | {type: 'deleteForever'; id: string}
   | {type: 'settings'; patch: Partial<AppSettings>}
   | {type: 'network'; isOnline: boolean}
@@ -43,7 +43,7 @@ export function notesReducer(state: NotesState, action: NotesAction): NotesState
       const acknowledged = new Set(action.acknowledgedDeletions);
       return {
         ...state,
-        notes: mergeNotes(state.notes, action.notes, state.pendingDeletions),
+        notes: mergeNotes(state.notes, action.notes, [...state.pendingDeletions, ...action.remoteDeletions ?? []]),
         pendingDeletions: state.pendingDeletions.filter(id => !acknowledged.has(id)),
       };
     }

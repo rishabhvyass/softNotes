@@ -12,6 +12,7 @@ import {
 } from 'react-native';
 import type {EdgeInsets} from 'react-native-safe-area-context';
 import Animated, {
+  Easing,
   FadeIn,
   FadeInRight,
   FadeOutLeft,
@@ -19,7 +20,6 @@ import Animated, {
   useAnimatedStyle,
   useReducedMotion,
   useSharedValue,
-  withSpring,
   withTiming,
 } from 'react-native-reanimated';
 import {NoteGlyph} from '../components/NoteGlyph';
@@ -267,6 +267,7 @@ function Writer({
           </View>
           <TextInput
             ref={titleRef}
+            accessibilityLabel="Note title"
             value={title}
             onChangeText={onTitle}
             placeholder="Start with a title"
@@ -278,6 +279,7 @@ function Writer({
           />
           <TextInput
             value={body}
+            accessibilityLabel="Note body"
             onChangeText={onBody}
             maxLength={50_000}
             placeholder="Write what you want to remember..."
@@ -289,6 +291,7 @@ function Writer({
           />
           <TextInput
             value={tags}
+            accessibilityLabel="Note tags"
             onChangeText={onTags}
             maxLength={1000}
             placeholder="#daily, #ideas"
@@ -352,7 +355,7 @@ function SaveAnimation({
   useEffect(() => {
     progress.value = reduceMotion
       ? withTiming(1, {duration: 120})
-      : withSpring(1, {damping: 20, stiffness: 110, mass: 0.8});
+      : withTiming(1, {duration: 900, easing: Easing.inOut(Easing.cubic)});
     const timeout = setTimeout(onFinished, reduceMotion ? 220 : 1050);
     return () => clearTimeout(timeout);
   }, [onFinished, progress, reduceMotion]);
@@ -360,8 +363,8 @@ function SaveAnimation({
   const paperStyle = useAnimatedStyle(() => ({
     opacity: interpolate(progress.value, [0, 0.82, 1], [1, 1, 0]),
     transform: [
-      {translateY: interpolate(progress.value, [0, 1], [0, -152])},
-      {scale: interpolate(progress.value, [0, 0.7, 1], [1, 0.62, 0.5])},
+      {translateY: interpolate(progress.value, [0, 0.35, 1], [0, -40, 120])},
+      {scale: interpolate(progress.value, [0, 0.7, 1], [1, 0.4, 0.16])},
       {rotate: `${interpolate(progress.value, [0, 1], [0, -5])}deg`},
     ],
   }));
@@ -383,7 +386,7 @@ function SaveAnimation({
       <Animated.View style={[styles.saveFolder, {backgroundColor: theme.colors.surface, borderColor: theme.colors.border}, folderStyle]}>
         <View style={[styles.saveFolderTab, {backgroundColor: theme.colors.surface, borderColor: theme.colors.border}]} />
         <NoteGlyph icon="heart" accent="#FF8FB4" size={46} />
-        <NoteGlyph icon="spark" accent="#72B8FF" size={46} />
+        <NoteGlyph icon={note.icon} accent={note.accent} size={46} />
         <NoteGlyph icon="check" accent="#9C82FF" size={46} />
         <View style={[styles.saveFolderPill, theme.dark ? styles.lavenderDark : styles.lavenderLight]}>
           <Text style={styles.saveFolderText}>Notes</Text>

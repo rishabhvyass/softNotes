@@ -61,6 +61,10 @@ export class NotesRepository {
       CREATE INDEX IF NOT EXISTS notes_updated_at_idx ON notes(updated_at DESC);
       CREATE INDEX IF NOT EXISTS notes_favorite_idx ON notes(is_favorite, updated_at DESC);
       CREATE INDEX IF NOT EXISTS notes_archived_idx ON notes(is_archived, updated_at DESC);
+      CREATE TABLE IF NOT EXISTS permanent_deletions (
+        id TEXT PRIMARY KEY,
+        deleted_at TEXT NOT NULL
+      );
     `);
   }
 
@@ -109,6 +113,7 @@ export class NotesRepository {
 
   create(draft: NoteDraft): Note {
     const id = draft.id ?? crypto.randomUUID();
+    if (this.isPermanentlyDeleted(id)) throw new DeletedNoteError();
     const now = new Date().toISOString();
     const createdAt = draft.createdAt ?? now;
     const updatedAt = draft.updatedAt ?? now;
@@ -200,7 +205,21 @@ export class NotesRepository {
   }
 
   deleteForever(id: string): boolean {
-    return this.db.query('DELETE FROM notes WHERE id = $id').run({ id }).changes > 0;
+    // Keep only the ID, not content, so an offline device cannot resurrect it.
+    this.db.transaction(() => {
+      this.db.query('INSERT OR IGNORE INTO permanent_deletions (id, deleted_at) VALUES ($id, $date)')
+        .run({id, date: new Date().toISOString()});
+      this.db.query('DELETE FROM notes WHERE id = $id').run({id});
+    })();
+    return true;
+  }
+
+  isPermanentlyDeleted(id: string): boolean {
+    return Boolean(this.db.query('SELECT id FROM permanent_deletions WHERE id = $id').get({id}));
+  }
+
+  deletedIds(): string[] {
+    return this.db.query<{id: string}, []>('SELECT id FROM permanent_deletions').all().map(row => row.id);
   }
 
   exportAll(): Note[] {
@@ -212,3 +231,6 @@ export class NotesRepository {
   }
 }
 
+export class DeletedNoteError extends Error {
+  constructor() { super('This note was permanently deleted.'); }
+}

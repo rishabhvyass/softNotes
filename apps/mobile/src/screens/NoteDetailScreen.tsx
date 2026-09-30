@@ -136,6 +136,7 @@ export function NoteDetailScreen({
           <TextInput
             editable={!note.deletedAt}
             value={title}
+            accessibilityLabel="Note title"
             onChangeText={setTitle}
             selectionColor={note.accent}
             style={[styles.titleInput, {color: theme.colors.text}]}
@@ -144,6 +145,7 @@ export function NoteDetailScreen({
           <TextInput
             editable={!note.deletedAt}
             value={body}
+            accessibilityLabel="Note body"
             onChangeText={setBody}
             maxLength={50_000}
             selectionColor={note.accent}
@@ -156,6 +158,7 @@ export function NoteDetailScreen({
           <TextInput
             editable={!note.deletedAt}
             value={tags}
+            accessibilityLabel="Note tags"
             onChangeText={setTags}
             maxLength={1000}
             selectionColor={note.accent}

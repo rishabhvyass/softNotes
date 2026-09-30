@@ -79,6 +79,20 @@ describe('Soft Notes API', () => {
     expect(await response.text()).toBe('');
   });
 
+  test('keeps permanent deletion IDs so an offline device cannot resurrect a note', async () => {
+    const draft = {id: 'offline-note', title: 'Private', body: 'Content', icon: 'heart', accent: '#FF8FB4'};
+    repository.create(draft as never);
+    const deletion = () => app.fetch(new Request('http://local/api/notes/offline-note?permanent=true', {method: 'DELETE'}));
+    expect((await deletion()).status).toBe(200);
+    expect((await deletion()).status).toBe(200);
+    expect(repository.get('offline-note')).toBeNull();
+    const recreated = await app.fetch(new Request('http://local/api/notes', {method: 'POST', body: JSON.stringify(draft)}));
+    expect(recreated.status).toBe(410);
+    const sync = await (await app.fetch(new Request('http://local/api/sync'))).json() as {notes: unknown[]; deletedIds: string[]};
+    expect(sync.notes).toEqual([]);
+    expect(sync.deletedIds).toEqual(['offline-note']);
+  });
+
   test('rejects oversized bodies even without a content-length header', async () => {
     const response = await app.fetch(new Request('http://local/api/notes', {
       method: 'POST', body: JSON.stringify({body: 'a'.repeat(300_000)}),

@@ -10,7 +10,7 @@ import React, {
 } from 'react';
 import {AppState, Platform} from 'react-native';
 import {seedNotes} from '../data/seedNotes';
-import {notesApi} from '../services/api';
+import {ApiError, notesApi} from '../services/api';
 import {
   loadPersistedState,
   savePersistedState,
@@ -123,27 +123,34 @@ export function NotesProvider({children}: {children: React.ReactNode}) {
     dispatch({type: 'sync', status: 'syncing', error: null});
 
     try {
-      const remote = await notesApi.listAll(snapshot.settings.apiUrl);
-      const remoteIds = new Set(remote.map(note => note.id));
+      const remote = await notesApi.snapshot(snapshot.settings.apiUrl);
+      const deletedIds = new Set(remote.deletedIds);
 
       for (const id of snapshot.pendingDeletions) {
-        if (remoteIds.has(id)) await notesApi.deleteForever(snapshot.settings.apiUrl, id);
+        await notesApi.deleteForever(snapshot.settings.apiUrl, id);
       }
 
       for (const note of snapshot.notes) {
-        const remoteNote = remote.find(candidate => candidate.id === note.id);
-        if (!remoteNote) {
-          await notesApi.create(snapshot.settings.apiUrl, note);
-        } else if (Date.parse(note.updatedAt) > Date.parse(remoteNote.updatedAt)) {
-          await notesApi.update(snapshot.settings.apiUrl, note);
+        if (deletedIds.has(note.id)) continue;
+        const remoteNote = remote.notes.find(candidate => candidate.id === note.id);
+        try {
+          if (!remoteNote) {
+            await notesApi.create(snapshot.settings.apiUrl, note);
+          } else if (Date.parse(note.updatedAt) > Date.parse(remoteNote.updatedAt)) {
+            await notesApi.update(snapshot.settings.apiUrl, note);
+          }
+        } catch (error) {
+          // Another device may permanently delete a note during this upload.
+          if (!(error instanceof ApiError && error.status === 410)) throw error;
         }
       }
 
-      const refreshedRemote = await notesApi.listAll(snapshot.settings.apiUrl);
+      const refreshedRemote = await notesApi.snapshot(snapshot.settings.apiUrl);
       if (generation.current === currentGeneration) {
         dispatch({
           type: 'syncMerge',
-          notes: refreshedRemote,
+          notes: refreshedRemote.notes,
+          remoteDeletions: refreshedRemote.deletedIds,
           acknowledgedDeletions: snapshot.pendingDeletions,
         });
         dispatch({type: 'sync', status: 'synced', error: null});

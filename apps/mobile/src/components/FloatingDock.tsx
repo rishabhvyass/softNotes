@@ -1,9 +1,10 @@
-import {IconBookmark, IconHome, IconPlus} from '@tabler/icons-react-native';
+import {IconPlus} from '@tabler/icons-react-native';
 import React from 'react';
 import {StyleSheet, Text, View} from 'react-native';
 import {useHaptics} from '../hooks/useHaptics';
 import {useAppTheme} from '../theme/theme';
 import {PressableScale} from './PressableScale';
+import {NoteGlyph} from './NoteGlyph';
 
 export type MainTab = 'home' | 'saved';
 
@@ -35,14 +36,12 @@ export function FloatingDock({
         <DockItem
           label="Home"
           active={active === 'home'}
-          icon={IconHome}
           onPress={() => activateTab('home')}
         />
         <View style={styles.centerGap} />
         <DockItem
           label="Saved"
           active={active === 'saved'}
-          icon={IconBookmark}
           onPress={() => activateTab('saved')}
         />
       </View>
@@ -67,12 +66,10 @@ export function FloatingDock({
 function DockItem({
   label,
   active,
-  icon: Icon,
   onPress,
 }: {
   label: string;
   active: boolean;
-  icon: React.ComponentType<{size?: number; color?: string; strokeWidth?: number}>;
   onPress(): void;
 }) {
   const theme = useAppTheme();
@@ -83,7 +80,7 @@ function DockItem({
       accessibilityState={{selected: active}}
       onPress={onPress}
       style={[styles.tab, active && {backgroundColor: theme.colors.surface}]}>
-      <Icon size={20} color={active ? '#8A70ED' : theme.colors.textFaint} strokeWidth={1.8} />
+      <NoteGlyph icon={label === 'Home' ? 'home' : 'heart'} accent={active ? (label === 'Home' ? '#ADA9BD' : '#FF8FB4') : '#C8C7CF'} size={23} />
       <Text style={[styles.tabLabel, {color: active ? theme.colors.text : theme.colors.textMuted}]}>{label}</Text>
     </PressableScale>
   );

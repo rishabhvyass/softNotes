@@ -1,4 +1,4 @@
-import { NotesRepository } from './repository.ts';
+import { DeletedNoteError, NotesRepository } from './repository.ts';
 import type { NoteScope } from './types.ts';
 import {
   ValidationError,
@@ -89,6 +89,10 @@ export function createApp(repository: NotesRepository) {
           });
         }
 
+        if (request.method === 'GET' && path === '/api/sync') {
+          return json({notes: repository.list('all'), deletedIds: repository.deletedIds()});
+        }
+
         if (request.method === 'POST' && path === '/api/notes') {
           const note = repository.create(validateNoteDraft(await readJson(request)));
           return json({ note }, 201);
@@ -112,6 +116,7 @@ export function createApp(repository: NotesRepository) {
             return note ? json({ note }) : json({ error: 'Note not found.' }, 404);
           }
           if (request.method === 'PATCH') {
+            if (repository.isPermanentlyDeleted(id)) throw new DeletedNoteError();
             const note = repository.update(id, validateNotePatch(await readJson(request)));
             return note ? json({ note }) : json({ error: 'Note not found.' }, 404);
           }
@@ -128,6 +133,7 @@ export function createApp(repository: NotesRepository) {
 
         return json({ error: 'Route not found.' }, 404);
       } catch (error) {
+        if (error instanceof DeletedNoteError) return json({error: error.message}, 410);
         if (error instanceof ValidationError) {
           return json({ error: error.message }, 400);
         }

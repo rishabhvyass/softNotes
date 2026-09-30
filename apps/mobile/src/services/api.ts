@@ -1,6 +1,6 @@
 import type {Note} from '../types/note';
 
-type NotesResponse = {notes: Note[]};
+export type SyncSnapshot = {notes: Note[]; deletedIds: string[]};
 type NoteResponse = {note: Note};
 
 export class ApiError extends Error {
@@ -44,9 +44,8 @@ async function requestJson<T>(
 }
 
 export const notesApi = {
-  async listAll(baseUrl: string): Promise<Note[]> {
-    const result = await requestJson<NotesResponse>(baseUrl, '/api/notes?scope=all');
-    return result.notes;
+  async snapshot(baseUrl: string): Promise<SyncSnapshot> {
+    return requestJson<SyncSnapshot>(baseUrl, '/api/sync');
   },
 
   async create(baseUrl: string, note: Note): Promise<Note> {
@@ -86,4 +85,3 @@ export const notesApi = {
     });
   },
 };
-
