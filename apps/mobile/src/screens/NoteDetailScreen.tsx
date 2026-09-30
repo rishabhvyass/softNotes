@@ -6,9 +6,10 @@ import {
   IconRestore,
   IconTrash,
 } from '@tabler/icons-react-native';
-import React, {useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import {
   Alert,
+  BackHandler,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
@@ -24,6 +25,7 @@ import {useHaptics} from '../hooks/useHaptics';
 import {useNotes} from '../store/NotesProvider';
 import {useAppTheme} from '../theme/theme';
 import {relativeDate} from '../utils/date';
+import {normalizeTags, validateContent} from '../utils/noteValidation';
 
 export function NoteDetailScreen({
   noteId,
@@ -43,6 +45,21 @@ export function NoteDetailScreen({
   const [tags, setTags] = useState(note?.tags.join(', ') ?? '');
   const [message, setMessage] = useState<string | null>(null);
 
+  const dirty = Boolean(note && (title !== note.title || body !== note.body || tags !== note.tags.join(', ')));
+  const leave = () => {
+    if (!dirty || note?.deletedAt) { onBack(); return; }
+    Alert.alert('Keep your changes?', 'Save this note before leaving, or discard the unsaved edits.', [
+      {text: 'Keep editing', style: 'cancel'},
+      {text: 'Discard', style: 'destructive', onPress: onBack},
+      {text: 'Save & leave', onPress: () => { if (save()) onBack(); }},
+    ]);
+  };
+
+  useEffect(() => {
+    const subscription = BackHandler.addEventListener('hardwareBackPress', () => { leave(); return true; });
+    return () => subscription.remove();
+  });
+
   if (!note) {
     return (
       <View style={[styles.missing, {backgroundColor: theme.colors.background}]}>
@@ -55,19 +72,21 @@ export function NoteDetailScreen({
   }
 
   const save = () => {
-    if (!title.trim()) {
-      setMessage('A title is required.');
+    const contentError = validateContent(title, body, normalizeTags(tags));
+    if (contentError) {
+      setMessage(contentError);
       haptic('notificationWarning');
-      return;
+      return false;
     }
     store.updateNote(note.id, {
       title: title.trim(),
       body,
-      tags: tags.split(',').map(tag => tag.trim()).filter(Boolean),
+      tags: normalizeTags(tags),
     });
     setMessage('Changes saved');
     haptic('notificationSuccess');
     setTimeout(() => setMessage(null), 1600);
+    return true;
   };
 
   const confirmTrash = () => {
@@ -82,7 +101,7 @@ export function NoteDetailScreen({
       style={[styles.screen, {backgroundColor: theme.colors.background}]}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <View style={[styles.header, {paddingTop: insets.top + 10}]}>
-        <PressableScale accessibilityRole="button" accessibilityLabel="Go back" onPress={onBack} style={[styles.circle, {backgroundColor: theme.colors.surface}]}>
+        <PressableScale accessibilityRole="button" accessibilityLabel="Go back" onPress={leave} style={[styles.circle, {backgroundColor: theme.colors.surface}]}>
           <IconChevronLeft size={23} color={theme.colors.text} strokeWidth={1.8} />
         </PressableScale>
         <View style={styles.headerCopy}>
@@ -126,6 +145,7 @@ export function NoteDetailScreen({
             editable={!note.deletedAt}
             value={body}
             onChangeText={setBody}
+            maxLength={50_000}
             selectionColor={note.accent}
             multiline
             textAlignVertical="top"
@@ -137,6 +157,7 @@ export function NoteDetailScreen({
             editable={!note.deletedAt}
             value={tags}
             onChangeText={setTags}
+            maxLength={1000}
             selectionColor={note.accent}
             placeholder="#tags"
             placeholderTextColor={theme.colors.textFaint}
@@ -145,7 +166,7 @@ export function NoteDetailScreen({
           />
         </View>
 
-        {message && <Text style={[styles.message, {color: message.includes('required') ? theme.colors.danger : theme.colors.success}]}>{message}</Text>}
+        {message && <Text style={[styles.message, {color: message === 'Changes saved' ? theme.colors.success : theme.colors.danger}]}>{message}</Text>}
 
         {note.deletedAt ? (
           <View style={styles.singleAction}>

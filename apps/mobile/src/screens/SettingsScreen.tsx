@@ -25,11 +25,13 @@ export function SettingsScreen({
   onBack,
   onArchive,
   onTrash,
+  onBackup,
 }: {
   insets: EdgeInsets;
   onBack(): void;
   onArchive(): void;
   onTrash(): void;
+  onBackup(): void;
 }) {
   const theme = useAppTheme();
   const haptic = useHaptics();
@@ -157,16 +159,10 @@ export function SettingsScreen({
         </View>
 
         <PressableScale
-          onPress={() => Alert.alert(
-            'Reset local sample data?',
-            'This replaces notes on this device with the three starter notes. Server data is not deleted.',
-            [
-              {text: 'Cancel', style: 'cancel'},
-              {text: 'Reset', style: 'destructive', onPress: () => store.resetLocalData()},
-            ],
-          )}
+          accessibilityRole="button"
+          onPress={onBackup}
           style={[styles.reset, {borderColor: theme.colors.border}]}>
-          <Text style={[styles.resetLabel, {color: theme.colors.danger}]}>Reset local sample data</Text>
+          <Text style={[styles.resetLabel, {color: theme.colors.text}]}>Backup & restore</Text>
         </PressableScale>
 
         <Text style={[styles.footer, {color: theme.colors.textFaint}]}>Soft Notes stores every edit locally first. Sync is optional and uses your own Bun server.</Text>

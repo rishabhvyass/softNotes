@@ -12,18 +12,19 @@ import {AppState, Platform} from 'react-native';
 import {seedNotes} from '../data/seedNotes';
 import {notesApi} from '../services/api';
 import {
-  clearPersistedState,
   loadPersistedState,
   savePersistedState,
 } from '../services/storage';
 import type {
   AppSettings,
   CollectionScope,
+  ComposeDraft,
   Note,
   NoteInput,
   NotePatch,
 } from '../types/note';
 import {notesReducer, type NotesState} from './notesReducer';
+import {normalizeTags} from '../utils/noteValidation';
 
 const defaultSettings: AppSettings = {
   apiUrl: Platform.select({
@@ -38,6 +39,7 @@ const initialState: NotesState = {
   notes: [],
   settings: defaultSettings,
   pendingDeletions: [],
+  composeDraft: null,
   hydrated: false,
   isOnline: true,
   syncStatus: 'idle',
@@ -53,7 +55,8 @@ type NotesContextValue = NotesState & {
   restoreNote(id: string): void;
   deleteForever(id: string): void;
   updateSettings(patch: Partial<AppSettings>): void;
-  resetLocalData(): Promise<void>;
+  updateComposeDraft(draft: ComposeDraft | null): void;
+  importNotes(notes: Note[]): void;
   syncNow(): Promise<void>;
   selectNotes(scope: CollectionScope, query?: string): Note[];
 };
@@ -77,6 +80,7 @@ export function NotesProvider({children}: {children: React.ReactNode}) {
           notes: persisted?.notes ?? seedNotes,
           settings: {...defaultSettings, ...persisted?.settings},
           pendingDeletions: persisted?.pendingDeletions ?? [],
+          composeDraft: persisted?.composeDraft ?? null,
         });
       })
       .catch(() => {
@@ -95,6 +99,7 @@ export function NotesProvider({children}: {children: React.ReactNode}) {
       notes: state.notes,
       settings: state.settings,
       pendingDeletions: state.pendingDeletions,
+      composeDraft: state.composeDraft,
     };
     // Serialize writes so a slower earlier save cannot overwrite a later edit.
     persistenceQueue.current = persistenceQueue.current
@@ -103,7 +108,7 @@ export function NotesProvider({children}: {children: React.ReactNode}) {
       .catch(() => {
         dispatch({type: 'sync', status: 'error', error: 'Could not save notes locally.'});
       });
-  }, [state.hydrated, state.notes, state.pendingDeletions, state.settings]);
+  }, [state.hydrated, state.notes, state.pendingDeletions, state.settings, state.composeDraft]);
 
   const syncNow = useCallback(async () => {
     const snapshot = latestState.current;
@@ -186,7 +191,7 @@ export function NotesProvider({children}: {children: React.ReactNode}) {
         body: input.body,
         icon: input.icon,
         accent: input.accent,
-        tags: input.tags ?? [],
+        tags: normalizeTags(input.tags ?? []),
         isFavorite: false,
         isArchived: false,
         deletedAt: null,
@@ -202,7 +207,7 @@ export function NotesProvider({children}: {children: React.ReactNode}) {
 
   const updateNote = useCallback(
     (id: string, patch: NotePatch) => {
-      dispatch({type: 'update', id, patch, updatedAt: new Date().toISOString()});
+      dispatch({type: 'update', id, patch: {...patch, ...(patch.tags ? {tags: normalizeTags(patch.tags)} : {})}, updatedAt: new Date().toISOString()});
       setTimeout(() => syncNow(), 0);
     },
     [syncNow],
@@ -246,12 +251,14 @@ export function NotesProvider({children}: {children: React.ReactNode}) {
     dispatch({type: 'settings', patch});
   }, []);
 
-  const resetLocalData = useCallback(async () => {
-    generation.current += 1;
-    await persistenceQueue.current;
-    await clearPersistedState();
-    dispatch({type: 'reset', notes: seedNotes});
+  const updateComposeDraft = useCallback((draft: ComposeDraft | null) => {
+    dispatch({type: 'draft', draft});
   }, []);
+
+  const importNotes = useCallback((notes: Note[]) => {
+    dispatch({type: 'import', notes});
+    setTimeout(() => syncNow(), 0);
+  }, [syncNow]);
 
   const selectNotes = useCallback(
     (scope: CollectionScope, query = '') => {
@@ -286,7 +293,8 @@ export function NotesProvider({children}: {children: React.ReactNode}) {
       restoreNote,
       deleteForever,
       updateSettings,
-      resetLocalData,
+      updateComposeDraft,
+      importNotes,
       syncNow,
       selectNotes,
     }),
@@ -300,7 +308,8 @@ export function NotesProvider({children}: {children: React.ReactNode}) {
       restoreNote,
       deleteForever,
       updateSettings,
-      resetLocalData,
+      updateComposeDraft,
+      importNotes,
       syncNow,
       selectNotes,
     ],

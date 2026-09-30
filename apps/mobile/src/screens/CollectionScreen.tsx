@@ -1,4 +1,4 @@
-import {IconAdjustments, IconChevronLeft, IconSettings} from '@tabler/icons-react-native';
+import {IconChevronLeft, IconSettings} from '@tabler/icons-react-native';
 import React, {useState} from 'react';
 import {ScrollView, StyleSheet, Text, View} from 'react-native';
 import type {EdgeInsets} from 'react-native-safe-area-context';
@@ -67,7 +67,7 @@ export function CollectionScreen({
             <PressableScale accessibilityRole="button" accessibilityLabel="Open settings" onPress={onSettings} style={[styles.circle, {backgroundColor: theme.colors.surface}]}>
               <IconSettings size={21} color={theme.colors.text} strokeWidth={1.7} />
             </PressableScale>
-          ) : <IconAdjustments size={22} color={theme.colors.textFaint} />}
+          ) : <View style={styles.circleSpacer} />}
         </View>
 
         <View style={styles.searchWrap}>

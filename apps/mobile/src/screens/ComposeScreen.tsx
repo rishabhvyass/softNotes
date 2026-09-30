@@ -29,6 +29,7 @@ import {useNotes} from '../store/NotesProvider';
 import {accents, useAppTheme} from '../theme/theme';
 import {NOTE_ICONS, type Note, type NoteIcon} from '../types/note';
 import {notePeriodLabel} from '../utils/date';
+import {normalizeTags, validateContent} from '../utils/noteValidation';
 
 type ComposeStage = 'icon' | 'write' | 'saving';
 
@@ -43,16 +44,21 @@ export function ComposeScreen({
 }) {
   const theme = useAppTheme();
   const haptic = useHaptics();
-  const {createNote} = useNotes();
-  const [stage, setStage] = useState<ComposeStage>('icon');
-  const [icon, setIcon] = useState<NoteIcon>('spark');
-  const [accent, setAccent] = useState(accents[0]);
-  const [title, setTitle] = useState('');
-  const [body, setBody] = useState('');
-  const [tags, setTags] = useState('');
+  const {createNote, composeDraft, updateComposeDraft} = useNotes();
+  const [stage, setStage] = useState<ComposeStage>(composeDraft?.title || composeDraft?.body ? 'write' : 'icon');
+  const [icon, setIcon] = useState<NoteIcon>(composeDraft?.icon ?? 'spark');
+  const [accent, setAccent] = useState(composeDraft?.accent ?? accents[0]);
+  const [title, setTitle] = useState(composeDraft?.title ?? '');
+  const [body, setBody] = useState(composeDraft?.body ?? '');
+  const [tags, setTags] = useState(composeDraft?.tags ?? '');
   const [error, setError] = useState<string | null>(null);
   const [savedNote, setSavedNote] = useState<Note | null>(null);
   const titleRef = useRef<React.ElementRef<typeof TextInput>>(null);
+
+  useEffect(() => {
+    if (stage === 'saving') return;
+    updateComposeDraft({title, body, tags, icon, accent});
+  }, [title, body, tags, icon, accent, stage, updateComposeDraft]);
 
   const chooseIcon = (nextIcon: NoteIcon, index: number) => {
     haptic('selection');
@@ -67,8 +73,9 @@ export function ComposeScreen({
   };
 
   const save = () => {
-    if (!title.trim()) {
-      setError('Give this note a title before saving.');
+    const contentError = validateContent(title, body, normalizeTags(tags));
+    if (contentError) {
+      setError(contentError);
       haptic('notificationWarning');
       titleRef.current?.focus();
       return;
@@ -79,10 +86,11 @@ export function ComposeScreen({
       body,
       icon,
       accent,
-      tags: tags.split(',').map(tag => tag.trim()).filter(Boolean),
+      tags: normalizeTags(tags),
     });
     setSavedNote(note);
     setStage('saving');
+    updateComposeDraft(null);
     haptic('notificationSuccess');
   };
 
@@ -271,6 +279,7 @@ function Writer({
           <TextInput
             value={body}
             onChangeText={onBody}
+            maxLength={50_000}
             placeholder="Write what you want to remember..."
             placeholderTextColor={theme.colors.textFaint}
             selectionColor={accent}
@@ -281,6 +290,7 @@ function Writer({
           <TextInput
             value={tags}
             onChangeText={onTags}
+            maxLength={1000}
             placeholder="#daily, #ideas"
             placeholderTextColor={theme.colors.textFaint}
             selectionColor={accent}

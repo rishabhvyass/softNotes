@@ -1,9 +1,10 @@
-import React, {useCallback, useState} from 'react';
-import {StatusBar, StyleSheet, View} from 'react-native';
+import React, {useCallback, useEffect, useState} from 'react';
+import {BackHandler, StatusBar, StyleSheet, View} from 'react-native';
 import {GestureHandlerRootView} from 'react-native-gesture-handler';
 import Animated, {FadeInRight, FadeOutLeft, useReducedMotion} from 'react-native-reanimated';
 import {SafeAreaProvider, useSafeAreaInsets} from 'react-native-safe-area-context';
 import {CollectionScreen} from './src/screens/CollectionScreen';
+import {BackupScreen} from './src/screens/BackupScreen';
 import {ComposeScreen} from './src/screens/ComposeScreen';
 import {HomeScreen} from './src/screens/HomeScreen';
 import {NoteDetailScreen} from './src/screens/NoteDetailScreen';
@@ -22,6 +23,7 @@ type Route =
   | {name: 'settings'}
   | {name: 'archive'}
   | {name: 'trash'}
+  | {name: 'backup'}
   | {name: 'detail'; noteId: string};
 
 function App() {
@@ -52,6 +54,15 @@ function AppNavigator() {
   }, []);
   const openNote = useCallback((note: Note) => navigate({name: 'detail', noteId: note.id}), [navigate]);
   const routeKey = route.name === 'detail' ? `${route.name}-${route.noteId}` : route.name;
+
+  useEffect(() => {
+    const subscription = BackHandler.addEventListener('hardwareBackPress', () => {
+      if (route.name === 'detail' || stack.length === 1) return false;
+      goBack();
+      return true;
+    });
+    return () => subscription.remove();
+  }, [goBack, route.name, stack.length]);
 
   return (
     <View style={[styles.flex, {backgroundColor: theme.colors.background}]}>
@@ -112,8 +123,10 @@ function AppNavigator() {
             onBack={goBack}
             onArchive={() => navigate({name: 'archive'})}
             onTrash={() => navigate({name: 'trash'})}
+            onBackup={() => navigate({name: 'backup'})}
           />
         )}
+        {route.name === 'backup' && <BackupScreen insets={insets} onBack={goBack} />}
       </Animated.View>
     </View>
   );

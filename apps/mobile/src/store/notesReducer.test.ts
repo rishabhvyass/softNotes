@@ -19,6 +19,7 @@ const state: NotesState = {
   notes: [note],
   settings: {apiUrl: 'http://local', hapticsEnabled: true, theme: 'system'},
   pendingDeletions: [],
+  composeDraft: null,
   hydrated: true,
   isOnline: true,
   syncStatus: 'idle',
@@ -53,6 +54,22 @@ describe('notesReducer', () => {
     });
     expect(next.notes).toEqual([edited]);
     expect(next.pendingDeletions).toEqual(['new-deletion']);
+  });
+
+  it('merges imports without overwriting newer local changes', () => {
+    const next = notesReducer(state, {type: 'import', notes: [
+      {...note, title: 'Older backup', updatedAt: '2026-09-29T00:00:00.000Z'},
+      {...note, id: 'new'},
+    ]});
+    expect(next.notes).toHaveLength(2);
+    expect(next.notes.find(item => item.id === note.id)?.title).toBe(note.title);
+  });
+
+  it('retains the compose draft through hydration and clears it after saving', () => {
+    const draft = {title: 'Unfinished', body: 'A thought', tags: '', icon: 'spark' as const, accent: '#72B8FF'};
+    const next = notesReducer(state, {type: 'hydrate', ...state, composeDraft: draft});
+    expect(next.composeDraft).toEqual(draft);
+    expect(notesReducer(next, {type: 'draft', draft: null}).composeDraft).toBeNull();
   });
 });
 

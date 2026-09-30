@@ -1,9 +1,10 @@
-import type {AppSettings, Note, NotePatch, SyncStatus} from '../types/note';
+import type {AppSettings, ComposeDraft, Note, NotePatch, SyncStatus} from '../types/note';
 
 export type NotesState = {
   notes: Note[];
   settings: AppSettings;
   pendingDeletions: string[];
+  composeDraft: ComposeDraft | null;
   hydrated: boolean;
   isOnline: boolean;
   syncStatus: SyncStatus;
@@ -11,7 +12,7 @@ export type NotesState = {
 };
 
 export type NotesAction =
-  | {type: 'hydrate'; notes: Note[]; settings: AppSettings; pendingDeletions: string[]}
+  | {type: 'hydrate'; notes: Note[]; settings: AppSettings; pendingDeletions: string[]; composeDraft?: ComposeDraft | null}
   | {type: 'create'; note: Note}
   | {type: 'update'; id: string; patch: NotePatch; updatedAt: string}
   | {type: 'syncMerge'; notes: Note[]; acknowledgedDeletions: string[]}
@@ -19,12 +20,13 @@ export type NotesAction =
   | {type: 'settings'; patch: Partial<AppSettings>}
   | {type: 'network'; isOnline: boolean}
   | {type: 'sync'; status: SyncStatus; error?: string | null}
-  | {type: 'reset'; notes: Note[]};
+  | {type: 'draft'; draft: ComposeDraft | null}
+  | {type: 'import'; notes: Note[]};
 
 export function notesReducer(state: NotesState, action: NotesAction): NotesState {
   switch (action.type) {
     case 'hydrate':
-      return {...state, notes: action.notes, settings: action.settings, pendingDeletions: action.pendingDeletions, hydrated: true};
+      return {...state, notes: action.notes, settings: action.settings, pendingDeletions: action.pendingDeletions, composeDraft: action.composeDraft ?? null, hydrated: true};
     case 'create':
       return {...state, notes: [action.note, ...state.notes], error: null};
     case 'update':
@@ -57,8 +59,10 @@ export function notesReducer(state: NotesState, action: NotesAction): NotesState
       return {...state, isOnline: action.isOnline, syncStatus: action.isOnline ? state.syncStatus : 'offline'};
     case 'sync':
       return {...state, syncStatus: action.status, error: action.error === undefined ? state.error : action.error};
-    case 'reset':
-      return {...state, notes: action.notes, pendingDeletions: [], error: null};
+    case 'draft':
+      return {...state, composeDraft: action.draft};
+    case 'import':
+      return {...state, notes: mergeNotes(state.notes, action.notes, state.pendingDeletions), error: null};
   }
 }
 

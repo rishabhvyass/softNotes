@@ -33,6 +33,8 @@ export type NoteInput = Pick<Note, 'title' | 'body' | 'icon' | 'accent'> & {
   tags?: string[];
 };
 
+export type ComposeDraft = {title: string; body: string; tags: string; icon: NoteIcon; accent: string};
+
 export type NotePatch = Partial<
   Pick<
     Note,
@@ -57,4 +59,3 @@ export type AppSettings = {
 };
 
 export type SyncStatus = 'idle' | 'syncing' | 'synced' | 'offline' | 'error';
-
