@@ -1,9 +1,10 @@
 import {IconChevronLeft} from '@tabler/icons-react-native';
-import React, {useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import {Alert, ScrollView, Share, StyleSheet, Text, TextInput, View} from 'react-native';
 import type {EdgeInsets} from 'react-native-safe-area-context';
 import {PressableScale} from '../components/PressableScale';
 import {exportBackup, importBackup} from '../services/backup';
+import {loadRecoveryData} from '../services/storage';
 import {useNotes} from '../store/NotesProvider';
 import {useAppTheme} from '../theme/theme';
 
@@ -12,6 +13,8 @@ export function BackupScreen({insets, onBack}: {insets: EdgeInsets; onBack(): vo
   const store = useNotes();
   const [json, setJson] = useState('');
   const [message, setMessage] = useState('');
+  const [recovery, setRecovery] = useState<string | null>(null);
+  useEffect(() => { loadRecoveryData().then(setRecovery).catch(() => {}); }, []);
   const share = async () => {
     try { await Share.share({title: 'SoftNotes backup', message: exportBackup(store.notes)}); }
     catch { Alert.alert('Could not share backup', 'Please try again.'); }
@@ -62,6 +65,16 @@ export function BackupScreen({insets, onBack}: {insets: EdgeInsets; onBack(): vo
           </PressableScale>
           {Boolean(message) && <Text style={[styles.helper, {color: theme.colors.success}]}>{message}</Text>}
         </View>
+        {recovery && <View style={[styles.card, {backgroundColor: theme.colors.surface}]}>
+          <Text style={[styles.title, {color: theme.colors.text}]}>Local recovery snapshot</Text>
+          <Text style={[styles.helper, {color: theme.colors.textMuted}]}>A previous local snapshot could not be read. Its original text was preserved so it can be repaired. This is not a normal importable backup.</Text>
+          <PressableScale accessibilityRole="button" onPress={() => Alert.alert('Export raw recovery data?', 'This can include your private notes and API token. Share it only to your own secure storage.', [
+            {text: 'Cancel', style: 'cancel'},
+            {text: 'Export', onPress: () => Share.share({title: 'SoftNotes recovery', message: recovery}).catch(() => Alert.alert('Could not share', 'Please try again.'))},
+          ])} style={[styles.button, {backgroundColor: theme.colors.button}]}>
+            <Text style={[styles.buttonText, {color: theme.colors.buttonText}]}>Export recovery snapshot</Text>
+          </PressableScale>
+        </View>}
         <Text style={[styles.helper, {color: theme.colors.textMuted}]}>Backups are plain text, not encrypted. Store them somewhere private.</Text>
       </ScrollView>
     </View>

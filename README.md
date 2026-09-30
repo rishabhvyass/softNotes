@@ -123,6 +123,13 @@ Restore by pasting that JSON. Imports validate every note before modifying the
 library, merge by ID, keep newer local copies, and respect pending deletions.
 This is a text-sharing workflow, not a native file picker.
 
+If a local snapshot becomes unreadable, its original text is preserved and a
+recovery notice is shown; it is not silently discarded. Backup & restore then
+offers a raw recovery export for repair. Unlike regular backups, this raw snapshot
+can include server settings and the API token. Do not send it to other people or
+uninstall the app before recovering it. Recovery snapshots require repair before
+they can be imported as a regular version 1 backup.
+
 The server database defaults to `apps/api/data/soft-notes.sqlite`. To back it up,
 use SQLite's backup command rather than copying only the main file while WAL is
 active:

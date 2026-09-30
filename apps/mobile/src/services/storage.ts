@@ -4,6 +4,7 @@ import {NOTE_ICONS} from '../types/note';
 import {parseNote} from '../utils/noteValidation';
 
 const STORAGE_KEY = '@soft-notes/app-state/v1';
+const RECOVERY_KEY = '@soft-notes/recovery/latest';
 
 export type PersistedState = {
   notes: Note[];
@@ -17,7 +18,7 @@ export async function loadPersistedState(): Promise<PersistedState | null> {
   if (!serialized) return null;
   try {
     const parsed = JSON.parse(serialized) as Partial<PersistedState>;
-    if (!Array.isArray(parsed.notes) || !parsed.settings) return null;
+    if (!Array.isArray(parsed.notes) || !parsed.settings) throw new Error('Invalid local state.');
     return {
       notes: parsed.notes.map(parseNote),
       settings: parsed.settings,
@@ -27,8 +28,15 @@ export async function loadPersistedState(): Promise<PersistedState | null> {
       composeDraft: validDraft(parsed.composeDraft) ? parsed.composeDraft : null,
     };
   } catch {
-    return null;
+    // Preserve the original before a fresh state can replace the primary key.
+    await AsyncStorage.setItem(`${RECOVERY_KEY}/${Date.now()}`, serialized);
+    await AsyncStorage.setItem(RECOVERY_KEY, serialized);
+    throw new Error('The original local snapshot was preserved in recovery storage.');
   }
+}
+
+export async function loadRecoveryData(): Promise<string | null> {
+  return AsyncStorage.getItem(RECOVERY_KEY);
 }
 
 function validDraft(draft: unknown): draft is ComposeDraft {
@@ -43,4 +51,3 @@ function validDraft(draft: unknown): draft is ComposeDraft {
 export async function savePersistedState(state: PersistedState): Promise<void> {
   await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(state));
 }
-

@@ -8,7 +8,7 @@ import React, {
   useReducer,
   useRef,
 } from 'react';
-import {AppState, Platform} from 'react-native';
+import {Alert, AppState, Platform} from 'react-native';
 import {seedNotes} from '../data/seedNotes';
 import {ApiError, notesApi} from '../services/api';
 import {
@@ -83,13 +83,14 @@ export function NotesProvider({children}: {children: React.ReactNode}) {
           composeDraft: persisted?.composeDraft ?? null,
         });
       })
-      .catch(() => {
+      .catch(error => {
         dispatch({
           type: 'hydrate',
-          notes: seedNotes,
+          notes: [],
           settings: defaultSettings,
           pendingDeletions: [],
         });
+        Alert.alert('Local data needs attention', `${error instanceof Error ? error.message : 'Could not read local notes.'} Open Settings → Backup & restore for recovery data. Do not uninstall the app before recovering your notes.`);
       });
   }, []);
 
