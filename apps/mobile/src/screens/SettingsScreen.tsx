@@ -51,7 +51,7 @@ export function SettingsScreen({
     <View style={[styles.screen, {backgroundColor: theme.colors.background}]}>
       <View style={[styles.header, {paddingTop: insets.top + 10}]}>
         <PressableScale accessibilityRole="button" accessibilityLabel="Go back" onPress={onBack} style={[styles.circle, {backgroundColor: theme.colors.surface}]}>
-          <IconChevronLeft size={23} color={theme.colors.text} stroke={1.8} />
+          <IconChevronLeft size={23} color={theme.colors.text} strokeWidth={1.8} />
         </PressableScale>
         <Text style={[styles.title, {color: theme.colors.text}]}>Settings</Text>
         <View style={styles.circle} />
@@ -63,7 +63,7 @@ export function SettingsScreen({
         contentContainerStyle={[styles.content, {paddingBottom: insets.bottom + 36}]}>
         <View style={[styles.syncCard, {backgroundColor: theme.colors.surface, borderColor: theme.colors.border}]}>
           <View style={[styles.syncIcon, {backgroundColor: theme.colors.surfaceMuted}]}>
-            <IconCloudCheck size={25} color={theme.colors.text} stroke={1.6} />
+            <IconCloudCheck size={25} color={theme.colors.text} strokeWidth={1.6} />
           </View>
           <View style={styles.syncCopy}>
             <Text style={[styles.cardTitle, {color: theme.colors.text}]}>Your private sync</Text>
@@ -77,7 +77,7 @@ export function SettingsScreen({
               store.syncNow();
             }}
             style={[styles.refresh, {backgroundColor: theme.colors.surfaceMuted}]}>
-            <IconRefresh size={19} color={theme.colors.text} stroke={1.8} />
+            <IconRefresh size={19} color={theme.colors.text} strokeWidth={1.8} />
           </PressableScale>
         </View>
         {store.error && (
@@ -96,13 +96,14 @@ export function SettingsScreen({
                   <PressableScale
                     key={preference}
                     accessibilityRole="radio"
+                    wrapperStyle={styles.flexItem}
                     accessibilityState={{selected}}
                     onPress={() => store.updateSettings({theme: preference})}
                     style={[
                       styles.themeOption,
                       {backgroundColor: selected ? theme.colors.button : theme.colors.surfaceMuted},
                     ]}>
-                    <Icon size={17} color={selected ? theme.colors.buttonText : theme.colors.textMuted} stroke={1.8} />
+                    <Icon size={17} color={selected ? theme.colors.buttonText : theme.colors.textMuted} strokeWidth={1.8} />
                     <Text style={[styles.themeLabel, {color: selected ? theme.colors.buttonText : theme.colors.textMuted}]}>
                       {preference[0].toUpperCase() + preference.slice(1)}
                     </Text>
@@ -114,7 +115,7 @@ export function SettingsScreen({
           <View style={[styles.divider, {backgroundColor: theme.colors.border}]} />
           <View style={styles.settingRow}>
             <View style={styles.settingLabelWrap}>
-              <IconDeviceMobileVibration size={21} color={theme.colors.text} stroke={1.7} />
+              <IconDeviceMobileVibration size={21} color={theme.colors.text} strokeWidth={1.7} />
               <View>
                 <Text style={[styles.settingLabel, {color: theme.colors.text}]}>Haptic feedback</Text>
                 <Text style={[styles.settingHelper, {color: theme.colors.textMuted}]}>Small tactile cues for actions</Text>
@@ -132,7 +133,7 @@ export function SettingsScreen({
         <SectionTitle label="Server" />
         <View style={[styles.section, {backgroundColor: theme.colors.surface, borderColor: theme.colors.border}]}>
           <View style={styles.serverLabel}>
-            <IconServer size={21} color={theme.colors.text} stroke={1.7} />
+            <IconServer size={21} color={theme.colors.text} strokeWidth={1.7} />
             <Text style={[styles.settingLabel, {color: theme.colors.text}]}>Bun API address</Text>
           </View>
           <TextInput
@@ -186,14 +187,14 @@ function LibraryButton({
   onPress,
 }: {
   label: string;
-  icon: React.ComponentType<{size?: number; color?: string; stroke?: number}>;
+  icon: React.ComponentType<{size?: number; color?: string; strokeWidth?: number}>;
   count: number;
   onPress(): void;
 }) {
   const theme = useAppTheme();
   return (
-    <PressableScale onPress={onPress} style={[styles.libraryButton, {backgroundColor: theme.colors.surface, borderColor: theme.colors.border}]}>
-      <Icon size={23} color={theme.colors.text} stroke={1.7} />
+    <PressableScale onPress={onPress} wrapperStyle={styles.flexItem} style={[styles.libraryButton, {backgroundColor: theme.colors.surface, borderColor: theme.colors.border}]}>
+      <Icon size={23} color={theme.colors.text} strokeWidth={1.7} />
       <Text style={[styles.libraryLabel, {color: theme.colors.text}]}>{label}</Text>
       <Text style={[styles.libraryCount, {color: theme.colors.textMuted}]}>{count}</Text>
     </PressableScale>
@@ -202,7 +203,8 @@ function LibraryButton({
 
 const styles = StyleSheet.create({
   screen: {flex: 1},
-  header: {height: 104, paddingHorizontal: 20, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between'},
+  header: {paddingBottom: 14, paddingHorizontal: 20, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between'},
+  flexItem: {flex: 1},
   circle: {width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center'},
   title: {fontSize: 21, fontWeight: '700'},
   content: {paddingHorizontal: 20, paddingTop: 14},
@@ -216,7 +218,7 @@ const styles = StyleSheet.create({
   section: {borderRadius: 22, borderWidth: StyleSheet.hairlineWidth, padding: 15},
   themeRow: {flexDirection: 'row', alignItems: 'center', gap: 11},
   themeOptions: {flex: 1, flexDirection: 'row', gap: 6},
-  themeOption: {flex: 1, height: 42, borderRadius: 14, alignItems: 'center', justifyContent: 'center', gap: 2},
+  themeOption: {height: 42, borderRadius: 14, alignItems: 'center', justifyContent: 'center', gap: 2},
   themeLabel: {fontSize: 9, fontWeight: '700'},
   divider: {height: StyleSheet.hairlineWidth, marginVertical: 14},
   settingRow: {flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between'},
@@ -227,7 +229,7 @@ const styles = StyleSheet.create({
   urlInput: {height: 48, borderRadius: 14, paddingHorizontal: 13, fontSize: 13},
   serverHint: {fontSize: 11, lineHeight: 16, marginTop: 9},
   libraryGrid: {flexDirection: 'row', gap: 10},
-  libraryButton: {flex: 1, height: 104, borderRadius: 22, borderWidth: StyleSheet.hairlineWidth, padding: 14, justifyContent: 'space-between'},
+  libraryButton: {height: 104, borderRadius: 22, borderWidth: StyleSheet.hairlineWidth, padding: 14, justifyContent: 'space-between'},
   libraryLabel: {fontSize: 14, fontWeight: '700'},
   libraryCount: {position: 'absolute', top: 14, right: 14, fontSize: 15, fontWeight: '700'},
   reset: {height: 52, borderRadius: 18, borderWidth: StyleSheet.hairlineWidth, alignItems: 'center', justifyContent: 'center', marginTop: 28},

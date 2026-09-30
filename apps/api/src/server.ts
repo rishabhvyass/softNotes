@@ -15,7 +15,7 @@ const app = createApp(repository);
 const port = Number(process.env.PORT ?? 4000);
 
 const server = Bun.serve({
-  hostname: process.env.HOST ?? '0.0.0.0',
+  hostname: process.env.HOST ?? '127.0.0.1',
   port,
   fetch: app.fetch,
 });
@@ -30,4 +30,3 @@ function shutdown() {
 
 process.on('SIGINT', shutdown);
 process.on('SIGTERM', shutdown);
-

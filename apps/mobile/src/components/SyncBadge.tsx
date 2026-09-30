@@ -30,7 +30,7 @@ export function SyncBadge({status}: {status: SyncStatus}) {
 
   return (
     <View style={styles.container} accessibilityLabel={`Sync status: ${label}`}>
-      <Icon size={14} color={theme.colors.textMuted} stroke={1.8} />
+      <Icon size={14} color={theme.colors.textMuted} strokeWidth={1.8} />
       <Text style={[styles.label, {color: theme.colors.textMuted}]}>{label}</Text>
     </View>
   );

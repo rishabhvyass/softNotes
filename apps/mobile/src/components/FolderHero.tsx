@@ -2,6 +2,7 @@ import React, {useEffect} from 'react';
 import {StyleSheet, Text, View} from 'react-native';
 import Animated, {
   Easing,
+  cancelAnimation,
   useAnimatedStyle,
   useReducedMotion,
   useSharedValue,
@@ -31,6 +32,7 @@ const AnimatedGlyph = ({note, delay, position}: {note: Note; delay: number; posi
         true,
       ),
     );
+    return () => cancelAnimation(float);
   }, [delay, float, reduceMotion]);
 
   const animatedStyle = useAnimatedStyle(() => ({
@@ -55,9 +57,11 @@ export function FolderHero({notes}: {notes: Note[]}) {
 
   return (
     <View style={styles.hero} accessibilityLabel={`${notes.length} notes in your collection`}>
-      {preview.map((note, index) => (
-        <AnimatedGlyph key={note.id} note={note} delay={index * 220} position={index} />
-      ))}
+      <View style={styles.glyphGroup}>
+        {preview.map((note, index) => (
+          <AnimatedGlyph key={note.id} note={note} delay={index * 220} position={index} />
+        ))}
+      </View>
       <View
         style={[
           styles.folderBack,
@@ -93,9 +97,10 @@ export function FolderHero({notes}: {notes: Note[]}) {
 const styles = StyleSheet.create({
   hero: {height: 230, position: 'relative', alignItems: 'center'},
   floatingGlyph: {position: 'absolute', zIndex: 3},
-  glyphLeft: {left: 53, top: 27},
-  glyphCenter: {left: 107, top: 8},
-  glyphRight: {left: 161, top: 27},
+  glyphGroup: {width: 192, height: 82, alignSelf: 'center', zIndex: 3},
+  glyphLeft: {left: 14, top: 27},
+  glyphCenter: {left: 72, top: 8},
+  glyphRight: {left: 130, top: 27},
   folderBack: {
     position: 'absolute',
     top: 92,

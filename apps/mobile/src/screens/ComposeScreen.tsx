@@ -1,6 +1,7 @@
 import {IconArrowLeft, IconArrowRight, IconCheck, IconX} from '@tabler/icons-react-native';
 import React, {useEffect, useMemo, useRef, useState} from 'react';
 import {
+  Keyboard,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
@@ -72,6 +73,7 @@ export function ComposeScreen({
       titleRef.current?.focus();
       return;
     }
+    Keyboard.dismiss();
     const note = createNote({
       title,
       body,
@@ -154,7 +156,7 @@ function IconPicker({
           <Text style={[styles.headerTitle, {color: theme.colors.text}]}>Select an icon</Text>
         </View>
         <PressableScale accessibilityRole="button" accessibilityLabel="Close" onPress={onClose} style={[styles.closeButton, {backgroundColor: theme.colors.surface}]}>
-          <IconX size={19} color={theme.colors.text} stroke={1.8} />
+          <IconX size={19} color={theme.colors.text} strokeWidth={1.8} />
         </PressableScale>
       </View>
 
@@ -229,14 +231,14 @@ function Writer({
       style={[styles.stage, {paddingTop: insets.top + 10, paddingBottom: insets.bottom + 10}]}>
       <View style={styles.stageHeader}>
         <PressableScale accessibilityRole="button" accessibilityLabel="Choose another icon" onPress={onBack} style={[styles.closeButton, {backgroundColor: theme.colors.surface}]}>
-          <IconArrowLeft size={19} color={theme.colors.text} stroke={1.8} />
+          <IconArrowLeft size={19} color={theme.colors.text} strokeWidth={1.8} />
         </PressableScale>
         <View style={styles.headerCopy}>
           <Text style={[styles.kicker, {color: theme.colors.textMuted}]}>New note</Text>
           <Text style={[styles.headerTitle, {color: theme.colors.text}]}>Write it down</Text>
         </View>
         <PressableScale accessibilityRole="button" accessibilityLabel="Close" onPress={onClose} style={[styles.closeButton, {backgroundColor: theme.colors.surface}]}>
-          <IconX size={19} color={theme.colors.text} stroke={1.8} />
+          <IconX size={19} color={theme.colors.text} strokeWidth={1.8} />
         </PressableScale>
       </View>
 
@@ -318,7 +320,7 @@ function RoundAction({
           styles.roundAction,
           {backgroundColor: theme.colors.button, borderColor: accent ?? theme.colors.surface},
         ]}>
-        <Icon size={27} color={theme.colors.buttonText} stroke={1.8} />
+        <Icon size={27} color={theme.colors.buttonText} strokeWidth={1.8} />
       </PressableScale>
     </View>
   );

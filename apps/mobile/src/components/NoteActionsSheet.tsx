@@ -6,14 +6,15 @@ import {
   IconTrash,
 } from '@tabler/icons-react-native';
 import React from 'react';
-import {Modal, Pressable, StyleSheet, Text, View} from 'react-native';
+import {Alert, Modal, Pressable, StyleSheet, Text, View} from 'react-native';
+import {useReducedMotion} from 'react-native-reanimated';
 import {useAppTheme} from '../theme/theme';
 import type {Note} from '../types/note';
 import {PressableScale} from './PressableScale';
 
 type Action = {
   label: string;
-  icon: React.ComponentType<{size?: number; color?: string; stroke?: number}>;
+  icon: React.ComponentType<{size?: number; color?: string; strokeWidth?: number}>;
   color?: string;
   onPress(): void;
 };
@@ -38,6 +39,7 @@ export function NoteActionsSheet({
   onDeleteForever(): void;
 }) {
   const theme = useAppTheme();
+  const reduceMotion = useReducedMotion();
   if (!note) return null;
 
   const run = (callback: () => void) => {
@@ -47,7 +49,10 @@ export function NoteActionsSheet({
   const actions: Action[] = note.deletedAt
     ? [
         {label: 'Restore note', icon: IconRestore, onPress: () => run(onRestore)},
-        {label: 'Delete forever', icon: IconTrash, color: theme.colors.danger, onPress: () => run(onDeleteForever)},
+        {label: 'Delete forever', icon: IconTrash, color: theme.colors.danger, onPress: () => run(() => Alert.alert('Delete forever?', 'This cannot be undone.', [
+          {text: 'Cancel', style: 'cancel'},
+          {text: 'Delete', style: 'destructive', onPress: onDeleteForever},
+        ]))},
       ]
     : [
         {
@@ -55,12 +60,12 @@ export function NoteActionsSheet({
           icon: note.isFavorite ? IconHeartFilled : IconHeart,
           onPress: () => run(onFavorite),
         },
-        {label: 'Archive', icon: IconArchive, onPress: () => run(onArchive)},
+        {label: note.isArchived ? 'Unarchive' : 'Archive', icon: IconArchive, onPress: () => run(note.isArchived ? onRestore : onArchive)},
         {label: 'Move to trash', icon: IconTrash, color: theme.colors.danger, onPress: () => run(onTrash)},
       ];
 
   return (
-    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
+    <Modal visible={visible} transparent animationType={reduceMotion ? 'none' : 'fade'} onRequestClose={onClose}>
       <View style={styles.modal}>
         <Pressable style={StyleSheet.absoluteFill} onPress={onClose} accessibilityLabel="Close note actions" />
         <View style={[styles.sheet, {backgroundColor: theme.colors.surfaceRaised}]}>
@@ -73,7 +78,7 @@ export function NoteActionsSheet({
                 onPress={onPress}
                 accessibilityRole="button"
                 style={[styles.action, {backgroundColor: theme.colors.surface, borderColor: theme.colors.border}]}>
-                <Icon size={21} color={color ?? theme.colors.text} stroke={1.7} />
+                <Icon size={21} color={color ?? theme.colors.text} strokeWidth={1.7} />
                 <Text style={[styles.actionLabel, {color: color ?? theme.colors.text}]}>{label}</Text>
               </PressableScale>
             ))}
@@ -101,4 +106,3 @@ const styles = StyleSheet.create({
   },
   actionLabel: {fontSize: 15, fontWeight: '600'},
 });
-

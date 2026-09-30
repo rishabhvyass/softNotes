@@ -28,7 +28,7 @@ export function SearchScreen({
     <View style={[styles.screen, {backgroundColor: theme.colors.background}]}>
       <View style={[styles.top, {paddingTop: insets.top + 10}]}>
         <PressableScale accessibilityRole="button" accessibilityLabel="Go back" onPress={onBack} style={[styles.back, {backgroundColor: theme.colors.surface}]}>
-          <IconChevronLeft size={23} color={theme.colors.text} stroke={1.8} />
+          <IconChevronLeft size={23} color={theme.colors.text} strokeWidth={1.8} />
         </PressableScale>
         <View style={styles.search}>
           <SearchField value={query} onChangeText={setQuery} autoFocus />

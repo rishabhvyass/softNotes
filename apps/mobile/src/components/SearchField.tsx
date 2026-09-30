@@ -16,7 +16,7 @@ export function SearchField({
   const theme = useAppTheme();
   return (
     <View style={[styles.field, {backgroundColor: theme.colors.surface, borderColor: theme.colors.border}]}>
-      <IconSearch size={20} color={theme.colors.textMuted} stroke={1.8} />
+      <IconSearch size={20} color={theme.colors.textMuted} strokeWidth={1.8} />
       <TextInput
         autoFocus={autoFocus}
         value={value}
@@ -30,7 +30,7 @@ export function SearchField({
       />
       {value.length > 0 && (
         <PressableScale accessibilityRole="button" accessibilityLabel="Clear search" onPress={() => onChangeText('')}>
-          <IconX size={18} color={theme.colors.textMuted} stroke={1.8} />
+          <IconX size={18} color={theme.colors.textMuted} strokeWidth={1.8} />
         </PressableScale>
       )}
     </View>

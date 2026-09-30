@@ -6,7 +6,7 @@ import {FloatingDock, type MainTab} from '../components/FloatingDock';
 import {FolderHero} from '../components/FolderHero';
 import {NoteRow} from '../components/NoteRow';
 import {PressableScale} from '../components/PressableScale';
-import {LoadingRows} from '../components/States';
+import {EmptyState, LoadingRows} from '../components/States';
 import {SyncBadge} from '../components/SyncBadge';
 import {useNotes} from '../store/NotesProvider';
 import {useAppTheme} from '../theme/theme';
@@ -51,7 +51,7 @@ export function HomeScreen({
               styles.search,
               {backgroundColor: theme.colors.surface, borderColor: theme.colors.border, shadowColor: theme.colors.shadow},
             ]}>
-            <IconSearch size={22} color={theme.colors.text} stroke={1.8} />
+            <IconSearch size={22} color={theme.colors.text} strokeWidth={1.8} />
           </PressableScale>
         </View>
 
@@ -69,6 +69,8 @@ export function HomeScreen({
 
         {!hydrated ? (
           <LoadingRows />
+        ) : recent.length === 0 ? (
+          <EmptyState title="A little space for your thoughts" message="Tap the plus button to create your first note." />
         ) : (
           <View style={styles.list}>
             {recent.map((note, index) => (

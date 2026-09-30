@@ -1,7 +1,7 @@
 import {IconNotes} from '@tabler/icons-react-native';
 import React from 'react';
 import {StyleSheet, Text, View} from 'react-native';
-import Animated, {FadeIn, withRepeat, withTiming, useAnimatedStyle, useSharedValue} from 'react-native-reanimated';
+import Animated, {FadeIn, cancelAnimation, useReducedMotion, withRepeat, withTiming, useAnimatedStyle, useSharedValue} from 'react-native-reanimated';
 import {useAppTheme} from '../theme/theme';
 
 export function EmptyState({title, message}: {title: string; message: string}) {
@@ -9,7 +9,7 @@ export function EmptyState({title, message}: {title: string; message: string}) {
   return (
     <Animated.View entering={FadeIn.duration(300)} style={styles.empty}>
       <View style={[styles.emptyIcon, {backgroundColor: theme.colors.surfaceMuted}]}>
-        <IconNotes size={28} color={theme.colors.textMuted} stroke={1.6} />
+        <IconNotes size={28} color={theme.colors.textMuted} strokeWidth={1.6} />
       </View>
       <Text style={[styles.emptyTitle, {color: theme.colors.text}]}>{title}</Text>
       <Text style={[styles.emptyMessage, {color: theme.colors.textMuted}]}>{message}</Text>
@@ -20,9 +20,12 @@ export function EmptyState({title, message}: {title: string; message: string}) {
 function SkeletonBar({width}: {width: `${number}%`}) {
   const theme = useAppTheme();
   const opacity = useSharedValue(0.42);
+  const reduceMotion = useReducedMotion();
   React.useEffect(() => {
+    if (reduceMotion) return;
     opacity.value = withRepeat(withTiming(0.8, {duration: 750}), -1, true);
-  }, [opacity]);
+    return () => cancelAnimation(opacity);
+  }, [opacity, reduceMotion]);
   const style = useAnimatedStyle(() => ({opacity: opacity.value}));
   return <Animated.View style={[styles.bar, {width, backgroundColor: theme.colors.surfaceMuted}, style]} />;
 }
@@ -55,4 +58,3 @@ const styles = StyleSheet.create({
   loadingCopy: {flex: 1, gap: 8},
   bar: {height: 9, borderRadius: 5},
 });
-

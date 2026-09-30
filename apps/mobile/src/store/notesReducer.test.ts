@@ -42,6 +42,18 @@ describe('notesReducer', () => {
     expect(next.notes).toEqual([]);
     expect(next.pendingDeletions).toEqual([note.id]);
   });
+
+  it('preserves edits and deletions made while a sync request is in flight', () => {
+    const edited = {...note, title: 'New local title', updatedAt: '2026-09-30T11:00:00.000Z'};
+    const localState = {...state, notes: [edited], pendingDeletions: ['new-deletion', 'old-deletion']};
+    const next = notesReducer(localState, {
+      type: 'syncMerge',
+      notes: [note, {...note, id: 'new-deletion'}],
+      acknowledgedDeletions: ['old-deletion'],
+    });
+    expect(next.notes).toEqual([edited]);
+    expect(next.pendingDeletions).toEqual(['new-deletion']);
+  });
 });
 
 describe('mergeNotes', () => {
@@ -51,4 +63,3 @@ describe('mergeNotes', () => {
     expect(mergeNotes([note], [remote], [])[0]?.title).toBe('First note');
   });
 });
-

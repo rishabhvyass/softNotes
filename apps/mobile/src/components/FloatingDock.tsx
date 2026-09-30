@@ -49,6 +49,7 @@ export function FloatingDock({
       <PressableScale
         accessibilityRole="button"
         accessibilityLabel="Create a new note"
+        wrapperStyle={styles.createPosition}
         onPress={() => {
           haptic('impactMedium');
           onCreate();
@@ -57,7 +58,7 @@ export function FloatingDock({
           styles.create,
           {backgroundColor: theme.colors.button, borderColor: theme.colors.background, shadowColor: theme.colors.shadow},
         ]}>
-        <IconPlus size={27} color={theme.colors.buttonText} stroke={1.7} />
+        <IconPlus size={27} color={theme.colors.buttonText} strokeWidth={1.7} />
       </PressableScale>
     </View>
   );
@@ -71,17 +72,18 @@ function DockItem({
 }: {
   label: string;
   active: boolean;
-  icon: React.ComponentType<{size?: number; color?: string; stroke?: number}>;
+  icon: React.ComponentType<{size?: number; color?: string; strokeWidth?: number}>;
   onPress(): void;
 }) {
   const theme = useAppTheme();
   return (
     <PressableScale
       accessibilityRole="tab"
+      wrapperStyle={styles.tabPosition}
       accessibilityState={{selected: active}}
       onPress={onPress}
       style={[styles.tab, active && {backgroundColor: theme.colors.surface}]}>
-      <Icon size={20} color={active ? '#8A70ED' : theme.colors.textFaint} stroke={1.8} />
+      <Icon size={20} color={active ? '#8A70ED' : theme.colors.textFaint} strokeWidth={1.8} />
       <Text style={[styles.tabLabel, {color: active ? theme.colors.text : theme.colors.textMuted}]}>{label}</Text>
     </PressableScale>
   );
@@ -102,15 +104,14 @@ const styles = StyleSheet.create({
     elevation: 10,
   },
   centerGap: {width: 72},
+  tabPosition: {flex: 1},
+  createPosition: {position: 'absolute', alignSelf: 'center', top: -13},
   create: {
-    position: 'absolute',
     width: 62,
     height: 62,
     borderRadius: 31,
     alignItems: 'center',
     justifyContent: 'center',
-    alignSelf: 'center',
-    top: -13,
     borderWidth: 4,
     shadowOpacity: 0.25,
     shadowRadius: 12,
@@ -118,7 +119,6 @@ const styles = StyleSheet.create({
     elevation: 12,
   },
   tab: {
-    flex: 1,
     height: 52,
     borderRadius: 24,
     alignItems: 'center',
@@ -127,4 +127,3 @@ const styles = StyleSheet.create({
   },
   tabLabel: {fontSize: 10, fontWeight: '600'},
 });
-

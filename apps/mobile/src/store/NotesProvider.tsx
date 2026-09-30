@@ -23,7 +23,7 @@ import type {
   NoteInput,
   NotePatch,
 } from '../types/note';
-import {mergeNotes, notesReducer, type NotesState} from './notesReducer';
+import {notesReducer, type NotesState} from './notesReducer';
 
 const defaultSettings: AppSettings = {
   apiUrl: Platform.select({
@@ -65,6 +65,9 @@ export function NotesProvider({children}: {children: React.ReactNode}) {
   const latestState = useRef(state);
   latestState.current = state;
   const syncing = useRef(false);
+  const syncRequested = useRef(false);
+  const persistenceQueue = useRef<Promise<void>>(Promise.resolve());
+  const generation = useRef(0);
 
   useEffect(() => {
     loadPersistedState()
@@ -88,19 +91,30 @@ export function NotesProvider({children}: {children: React.ReactNode}) {
 
   useEffect(() => {
     if (!state.hydrated) return;
-    savePersistedState({
+    const persisted = {
       notes: state.notes,
       settings: state.settings,
       pendingDeletions: state.pendingDeletions,
-    }).catch(() => {
-      dispatch({type: 'sync', status: 'error', error: 'Could not save notes locally.'});
-    });
+    };
+    // Serialize writes so a slower earlier save cannot overwrite a later edit.
+    persistenceQueue.current = persistenceQueue.current
+      .catch(() => {})
+      .then(() => savePersistedState(persisted))
+      .catch(() => {
+        dispatch({type: 'sync', status: 'error', error: 'Could not save notes locally.'});
+      });
   }, [state.hydrated, state.notes, state.pendingDeletions, state.settings]);
 
   const syncNow = useCallback(async () => {
     const snapshot = latestState.current;
-    if (!snapshot.hydrated || !snapshot.isOnline || syncing.current) return;
+    if (!snapshot.hydrated || !snapshot.isOnline) return;
+    if (syncing.current) {
+      syncRequested.current = true;
+      return;
+    }
     syncing.current = true;
+    syncRequested.current = false;
+    const currentGeneration = generation.current;
     dispatch({type: 'sync', status: 'syncing', error: null});
 
     try {
@@ -121,13 +135,16 @@ export function NotesProvider({children}: {children: React.ReactNode}) {
       }
 
       const refreshedRemote = await notesApi.listAll(snapshot.settings.apiUrl);
-      dispatch({
-        type: 'replace',
-        notes: mergeNotes(snapshot.notes, refreshedRemote, snapshot.pendingDeletions),
-        pendingDeletions: [],
-      });
-      dispatch({type: 'sync', status: 'synced', error: null});
+      if (generation.current === currentGeneration) {
+        dispatch({
+          type: 'syncMerge',
+          notes: refreshedRemote,
+          acknowledgedDeletions: snapshot.pendingDeletions,
+        });
+        dispatch({type: 'sync', status: 'synced', error: null});
+      }
     } catch (error) {
+      if (generation.current !== currentGeneration) return;
       dispatch({
         type: 'sync',
         status: 'error',
@@ -135,12 +152,14 @@ export function NotesProvider({children}: {children: React.ReactNode}) {
       });
     } finally {
       syncing.current = false;
+      if (syncRequested.current) setTimeout(() => syncNow(), 100);
     }
   }, []);
 
   useEffect(() => {
     const unsubscribe = NetInfo.addEventListener(network => {
-      const isOnline = Boolean(network.isConnected && network.isInternetReachable !== false);
+      // A local Bun server remains reachable on LAN even without internet access.
+      const isOnline = Boolean(network.isConnected);
       dispatch({type: 'network', isOnline});
       if (isOnline) setTimeout(() => syncNow(), 150);
     });
@@ -223,10 +242,13 @@ export function NotesProvider({children}: {children: React.ReactNode}) {
   );
 
   const updateSettings = useCallback((patch: Partial<AppSettings>) => {
+    if (patch.apiUrl) generation.current += 1;
     dispatch({type: 'settings', patch});
   }, []);
 
   const resetLocalData = useCallback(async () => {
+    generation.current += 1;
+    await persistenceQueue.current;
     await clearPersistedState();
     dispatch({type: 'reset', notes: seedNotes});
   }, []);
@@ -292,4 +314,3 @@ export function useNotes(): NotesContextValue {
   if (!context) throw new Error('useNotes must be used inside NotesProvider.');
   return context;
 }
-

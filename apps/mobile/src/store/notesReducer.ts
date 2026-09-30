@@ -14,7 +14,7 @@ export type NotesAction =
   | {type: 'hydrate'; notes: Note[]; settings: AppSettings; pendingDeletions: string[]}
   | {type: 'create'; note: Note}
   | {type: 'update'; id: string; patch: NotePatch; updatedAt: string}
-  | {type: 'replace'; notes: Note[]; pendingDeletions?: string[]}
+  | {type: 'syncMerge'; notes: Note[]; acknowledgedDeletions: string[]}
   | {type: 'deleteForever'; id: string}
   | {type: 'settings'; patch: Partial<AppSettings>}
   | {type: 'network'; isOnline: boolean}
@@ -35,8 +35,16 @@ export function notesReducer(state: NotesState, action: NotesAction): NotesState
         ),
         error: null,
       };
-    case 'replace':
-      return {...state, notes: action.notes, pendingDeletions: action.pendingDeletions ?? state.pendingDeletions};
+    case 'syncMerge': {
+      // Merge against current state, not the snapshot captured before the network call.
+      // An edit or deletion made while syncing must win over an older response.
+      const acknowledged = new Set(action.acknowledgedDeletions);
+      return {
+        ...state,
+        notes: mergeNotes(state.notes, action.notes, state.pendingDeletions),
+        pendingDeletions: state.pendingDeletions.filter(id => !acknowledged.has(id)),
+      };
+    }
     case 'deleteForever':
       return {
         ...state,
@@ -66,4 +74,3 @@ export function mergeNotes(local: Note[], remote: Note[], deletedIds: string[]):
   }
   return [...byId.values()].sort((a, b) => Date.parse(b.updatedAt) - Date.parse(a.updatedAt));
 }
-

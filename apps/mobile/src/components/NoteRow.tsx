@@ -44,7 +44,7 @@ export function NoteRow({
           </View>
           <Text style={[styles.meta, {color: theme.colors.textMuted}]}>{relativeDate(note.updatedAt)}</Text>
         </View>
-        {trailing ?? <IconChevronRight size={18} color={theme.colors.textFaint} stroke={1.6} />}
+        {trailing ?? <IconChevronRight size={18} color={theme.colors.textFaint} strokeWidth={1.6} />}
       </PressableScale>
     </Animated.View>
   );

@@ -6,7 +6,7 @@ import {
   IconRestore,
   IconTrash,
 } from '@tabler/icons-react-native';
-import React, {useEffect, useState} from 'react';
+import React, {useState} from 'react';
 import {
   Alert,
   KeyboardAvoidingView,
@@ -42,13 +42,6 @@ export function NoteDetailScreen({
   const [body, setBody] = useState(note?.body ?? '');
   const [tags, setTags] = useState(note?.tags.join(', ') ?? '');
   const [message, setMessage] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (!note) return;
-    setTitle(note.title);
-    setBody(note.body);
-    setTags(note.tags.join(', '));
-  }, [note]);
 
   if (!note) {
     return (
@@ -90,7 +83,7 @@ export function NoteDetailScreen({
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <View style={[styles.header, {paddingTop: insets.top + 10}]}>
         <PressableScale accessibilityRole="button" accessibilityLabel="Go back" onPress={onBack} style={[styles.circle, {backgroundColor: theme.colors.surface}]}>
-          <IconChevronLeft size={23} color={theme.colors.text} stroke={1.8} />
+          <IconChevronLeft size={23} color={theme.colors.text} strokeWidth={1.8} />
         </PressableScale>
         <View style={styles.headerCopy}>
           <Text style={[styles.headerTitle, {color: theme.colors.text}]}>Note</Text>
@@ -103,7 +96,7 @@ export function NoteDetailScreen({
           style={[styles.circle, {backgroundColor: theme.colors.surface}]}>
           {note.isFavorite
             ? <IconHeartFilled size={22} color={note.accent} />
-            : <IconHeart size={22} color={theme.colors.text} stroke={1.8} />}
+            : <IconHeart size={22} color={theme.colors.text} strokeWidth={1.8} />}
         </PressableScale>
       </View>
 
@@ -173,7 +166,7 @@ export function NoteDetailScreen({
               <Text style={[styles.doneLabel, {color: theme.colors.buttonText}]}>Save changes</Text>
             </PressableScale>
             <View style={styles.secondaryActions}>
-              <ActionButton label="Archive" icon={IconArchive} onPress={() => { store.archiveNote(note.id); onBack(); }} />
+              <ActionButton label={note.isArchived ? 'Unarchive' : 'Archive'} icon={IconArchive} onPress={() => { if (note.isArchived) store.restoreNote(note.id); else store.archiveNote(note.id); onBack(); }} />
               <ActionButton label="Trash" icon={IconTrash} danger onPress={confirmTrash} />
             </View>
           </>
@@ -190,15 +183,15 @@ function ActionButton({
   danger = false,
 }: {
   label: string;
-  icon: React.ComponentType<{size?: number; color?: string; stroke?: number}>;
+  icon: React.ComponentType<{size?: number; color?: string; strokeWidth?: number}>;
   onPress(): void;
   danger?: boolean;
 }) {
   const theme = useAppTheme();
   const color = danger ? theme.colors.danger : theme.colors.text;
   return (
-    <PressableScale onPress={onPress} style={[styles.actionButton, {backgroundColor: theme.colors.surface, borderColor: theme.colors.border}]}>
-      <Icon size={20} color={color} stroke={1.7} />
+    <PressableScale onPress={onPress} wrapperStyle={styles.flexItem} style={[styles.actionButton, {backgroundColor: theme.colors.surface, borderColor: theme.colors.border}]}>
+      <Icon size={20} color={color} strokeWidth={1.7} />
       <Text style={[styles.actionLabel, {color}]}>{label}</Text>
     </PressableScale>
   );
@@ -206,7 +199,8 @@ function ActionButton({
 
 const styles = StyleSheet.create({
   screen: {flex: 1},
-  header: {paddingHorizontal: 20, height: 104, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between'},
+  header: {paddingHorizontal: 20, paddingBottom: 14, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between'},
+  flexItem: {flexGrow: 1},
   circle: {width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center'},
   headerCopy: {alignItems: 'center'},
   headerTitle: {fontSize: 17, fontWeight: '700'},
@@ -224,7 +218,7 @@ const styles = StyleSheet.create({
   doneLabel: {fontSize: 15, fontWeight: '700'},
   secondaryActions: {flexDirection: 'row', gap: 10, marginTop: 10},
   singleAction: {gap: 10, marginTop: 18},
-  actionButton: {flex: 1, height: 54, borderRadius: 18, borderWidth: StyleSheet.hairlineWidth, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8},
+  actionButton: {height: 54, borderRadius: 18, borderWidth: StyleSheet.hairlineWidth, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8},
   actionLabel: {fontSize: 14, fontWeight: '600'},
   missing: {flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24},
   missingTitle: {fontSize: 18, fontWeight: '700'},

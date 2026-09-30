@@ -16,7 +16,7 @@ import {
 } from '@tabler/icons-react-native';
 import type {NoteIcon} from '../types/note';
 
-type GlyphIcon = React.ComponentType<{size?: number; color?: string; stroke?: number}>;
+type GlyphIcon = React.ComponentType<{size?: number; color?: string; strokeWidth?: number}>;
 
 const glyphs: Record<NoteIcon, GlyphIcon> = {
   spark: IconSparkles,
@@ -60,7 +60,7 @@ export function NoteGlyph({
         selected ? styles.selected : styles.unselected,
       ]}>
       <View style={[styles.highlight, {borderRadius: size * 0.28}]} />
-      <Icon size={iconSize} color="#FFFFFF" stroke={1.8} />
+      <Icon size={iconSize} color="#FFFFFF" strokeWidth={1.8} />
     </View>
   );
 }

@@ -59,13 +59,13 @@ export function CollectionScreen({
         <View style={styles.header}>
           {onBack ? (
             <PressableScale accessibilityRole="button" accessibilityLabel="Go back" onPress={onBack} style={[styles.circle, {backgroundColor: theme.colors.surface}]}>
-              <IconChevronLeft size={23} color={theme.colors.text} stroke={1.8} />
+              <IconChevronLeft size={23} color={theme.colors.text} strokeWidth={1.8} />
             </PressableScale>
           ) : <View style={styles.circleSpacer} />}
           <Text style={[styles.title, {color: theme.colors.text}]}>{screenCopy.title}</Text>
           {onSettings ? (
             <PressableScale accessibilityRole="button" accessibilityLabel="Open settings" onPress={onSettings} style={[styles.circle, {backgroundColor: theme.colors.surface}]}>
-              <IconSettings size={21} color={theme.colors.text} stroke={1.7} />
+              <IconSettings size={21} color={theme.colors.text} strokeWidth={1.7} />
             </PressableScale>
           ) : <IconAdjustments size={22} color={theme.colors.textFaint} />}
         </View>

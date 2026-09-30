@@ -1,5 +1,5 @@
 import React from 'react';
-import {Pressable, type PressableProps, StyleSheet} from 'react-native';
+import {Pressable, type PressableProps, type StyleProp, type ViewStyle, StyleSheet} from 'react-native';
 import Animated, {
   useAnimatedStyle,
   useReducedMotion,
@@ -11,17 +11,18 @@ import Animated, {
 export function PressableScale({
   children,
   style,
+  wrapperStyle,
   onPressIn,
   onPressOut,
   disabled,
   ...props
-}: PressableProps) {
+}: PressableProps & {wrapperStyle?: StyleProp<ViewStyle>}) {
   const scale = useSharedValue(1);
   const reduceMotion = useReducedMotion();
   const animatedStyle = useAnimatedStyle(() => ({transform: [{scale: scale.value}]}));
 
   return (
-    <Animated.View style={[animatedStyle, disabled && styles.disabled]}>
+    <Animated.View style={[wrapperStyle, animatedStyle, disabled && styles.disabled]}>
       <Pressable
         {...props}
         disabled={disabled}
@@ -43,4 +44,3 @@ export function PressableScale({
 const styles = StyleSheet.create({
   disabled: {opacity: 0.45},
 });
-

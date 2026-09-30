@@ -13,7 +13,7 @@ const VALID_SCOPES = new Set<NoteScope>([
   'trashed',
   'all',
 ]);
-const MAX_REQUEST_BYTES = 64 * 1024;
+const MAX_REQUEST_BYTES = 256 * 1024;
 
 function json(data: unknown, status = 200): Response {
   return Response.json(data, {
@@ -32,8 +32,28 @@ async function readJson(request: Request): Promise<unknown> {
   if (contentLength > MAX_REQUEST_BYTES) {
     throw new ValidationError('Request body is too large.');
   }
+  const reader = request.body?.getReader();
+  if (!reader) throw new ValidationError('Request body must be valid JSON.');
+  const chunks: Uint8Array[] = [];
+  let size = 0;
+  while (true) {
+    const {value, done} = await reader.read();
+    if (done) break;
+    size += value.byteLength;
+    if (size > MAX_REQUEST_BYTES) {
+      await reader.cancel();
+      throw new ValidationError('Request body is too large.');
+    }
+    chunks.push(value);
+  }
+  const bytes = new Uint8Array(size);
+  let offset = 0;
+  for (const chunk of chunks) {
+    bytes.set(chunk, offset);
+    offset += chunk.byteLength;
+  }
   try {
-    return await request.json();
+    return JSON.parse(new TextDecoder().decode(bytes));
   } catch {
     throw new ValidationError('Request body must be valid JSON.');
   }
@@ -42,7 +62,14 @@ async function readJson(request: Request): Promise<unknown> {
 export function createApp(repository: NotesRepository) {
   return {
     async fetch(request: Request): Promise<Response> {
-      if (request.method === 'OPTIONS') return json(null, 204);
+      if (request.method === 'OPTIONS') return new Response(null, {
+        status: 204,
+        headers: {
+          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Headers': 'Content-Type',
+          'Access-Control-Allow-Methods': 'GET,POST,PATCH,DELETE,OPTIONS',
+        },
+      });
 
       const url = new URL(request.url);
       const path = url.pathname.replace(/\/$/, '') || '/';
@@ -110,4 +137,3 @@ export function createApp(repository: NotesRepository) {
     },
   };
 }
-

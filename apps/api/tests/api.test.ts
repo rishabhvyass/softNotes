@@ -72,5 +72,18 @@ describe('Soft Notes API', () => {
     expect(response.status).toBe(400);
     expect(await response.json()).toEqual({ error: 'Title is required.' });
   });
-});
 
+  test('allows a bodyless CORS preflight', async () => {
+    const response = await app.fetch(new Request('http://local/api/notes', {method: 'OPTIONS'}));
+    expect(response.status).toBe(204);
+    expect(await response.text()).toBe('');
+  });
+
+  test('rejects oversized bodies even without a content-length header', async () => {
+    const response = await app.fetch(new Request('http://local/api/notes', {
+      method: 'POST', body: JSON.stringify({body: 'a'.repeat(300_000)}),
+    }));
+    expect(response.status).toBe(400);
+    expect(await response.json()).toEqual({error: 'Request body is too large.'});
+  });
+});
