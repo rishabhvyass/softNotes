@@ -1,0 +1,28 @@
+# Dependencies
+node_modules/
+**/node_modules/
+
+# React Native / native build output
+apps/mobile/android/.gradle/
+apps/mobile/android/app/build/
+apps/mobile/android/build/
+apps/mobile/ios/Pods/
+apps/mobile/ios/build/
+apps/mobile/.bundle/
+
+# Bun API runtime data
+apps/api/data/*.sqlite
+apps/api/data/*.sqlite-*
+!apps/api/data/.gitkeep
+
+# Environment and local tooling
+.env
+.env.*
+!.env.example
+.DS_Store
+*.log
+coverage/
+
+# Local analysis and generated reference frames
+work/
+
