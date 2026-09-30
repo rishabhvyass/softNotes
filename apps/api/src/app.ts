@@ -1,4 +1,5 @@
 import { DeletedNoteError, NotesRepository } from './repository.ts';
+import {timingSafeEqual} from 'node:crypto';
 import type { NoteScope } from './types.ts';
 import {
   ValidationError,
@@ -20,7 +21,7 @@ function json(data: unknown, status = 200): Response {
     status,
     headers: {
       'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Headers': 'Content-Type',
+      'Access-Control-Allow-Headers': 'Content-Type,Authorization',
       'Access-Control-Allow-Methods': 'GET,POST,PATCH,DELETE,OPTIONS',
       'Cache-Control': 'no-store',
     },
@@ -59,20 +60,27 @@ async function readJson(request: Request): Promise<unknown> {
   }
 }
 
-export function createApp(repository: NotesRepository) {
+export function createApp(repository: NotesRepository, options: {token?: string} = {}) {
   return {
     async fetch(request: Request): Promise<Response> {
       if (request.method === 'OPTIONS') return new Response(null, {
         status: 204,
         headers: {
           'Access-Control-Allow-Origin': '*',
-          'Access-Control-Allow-Headers': 'Content-Type',
+          'Access-Control-Allow-Headers': 'Content-Type,Authorization',
           'Access-Control-Allow-Methods': 'GET,POST,PATCH,DELETE,OPTIONS',
         },
       });
 
       const url = new URL(request.url);
       const path = url.pathname.replace(/\/$/, '') || '/';
+      if (path.startsWith('/api/') && options.token) {
+        const supplied = Buffer.from(request.headers.get('Authorization') ?? '');
+        const expected = Buffer.from(`Bearer ${options.token}`);
+        if (supplied.length !== expected.length || !timingSafeEqual(supplied, expected)) {
+          return json({error: 'A valid API token is required.'}, 401);
+        }
+      }
 
       try {
         if (request.method === 'GET' && path === '/health') {

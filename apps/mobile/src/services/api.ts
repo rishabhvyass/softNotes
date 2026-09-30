@@ -18,13 +18,14 @@ async function requestJson<T>(
   baseUrl: string,
   path: string,
   init?: RequestInit,
+  token?: string,
 ): Promise<T> {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 8_000);
   try {
     const response = await fetch(endpoint(baseUrl, path), {
       ...init,
-      headers: {'Content-Type': 'application/json', ...init?.headers},
+      headers: {'Content-Type': 'application/json', ...(token ? {Authorization: `Bearer ${token}`} : {}), ...init?.headers},
       signal: controller.signal,
     });
     const body = (await response.json()) as T & {error?: string};
@@ -44,20 +45,20 @@ async function requestJson<T>(
 }
 
 export const notesApi = {
-  async snapshot(baseUrl: string): Promise<SyncSnapshot> {
-    return requestJson<SyncSnapshot>(baseUrl, '/api/sync');
+  async snapshot(baseUrl: string, token?: string): Promise<SyncSnapshot> {
+    return requestJson<SyncSnapshot>(baseUrl, '/api/sync', undefined, token);
   },
 
-  async create(baseUrl: string, note: Note): Promise<Note> {
+  async create(baseUrl: string, note: Note, token?: string): Promise<Note> {
     const result = await requestJson<NoteResponse>(baseUrl, '/api/notes', {
       method: 'POST',
       body: JSON.stringify(note),
-    });
-    if (note.deletedAt) return this.update(baseUrl, note);
+    }, token);
+    if (note.deletedAt) return this.update(baseUrl, note, token);
     return result.note;
   },
 
-  async update(baseUrl: string, note: Note): Promise<Note> {
+  async update(baseUrl: string, note: Note, token?: string): Promise<Note> {
     const result = await requestJson<NoteResponse>(
       baseUrl,
       `/api/notes/${encodeURIComponent(note.id)}`,
@@ -74,14 +75,14 @@ export const notesApi = {
           deletedAt: note.deletedAt,
           updatedAt: note.updatedAt,
         }),
-      },
+      }, token,
     );
     return result.note;
   },
 
-  async deleteForever(baseUrl: string, id: string): Promise<void> {
+  async deleteForever(baseUrl: string, id: string, token?: string): Promise<void> {
     await requestJson(baseUrl, `/api/notes/${encodeURIComponent(id)}?permanent=true`, {
       method: 'DELETE',
-    });
+    }, token);
   },
 };

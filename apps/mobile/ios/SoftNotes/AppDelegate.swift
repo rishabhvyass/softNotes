@@ -40,9 +40,15 @@ class ReactNativeDelegate: RCTDefaultReactNativeFactoryDelegate {
 
   override func bundleURL() -> URL? {
 #if DEBUG
-    RCTBundleURLProvider.sharedSettings().jsBundleURL(forBundleRoot: "index")
+    let provider = RCTBundleURLProvider.sharedSettings()
+#if targetEnvironment(simulator)
+    // React Native's prebuilt core can retain port 8081. Keep this app on its
+    // dedicated Metro port, with an override for a developer's custom host.
+    provider.jsLocation = ProcessInfo.processInfo.environment["SOFTNOTES_METRO_HOST"] ?? "localhost:8088"
+#endif
+    return provider.jsBundleURL(forBundleRoot: "index")
 #else
-    Bundle.main.url(forResource: "main", withExtension: "jsbundle")
+    return Bundle.main.url(forResource: "main", withExtension: "jsbundle")
 #endif
   }
 }

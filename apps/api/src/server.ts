@@ -11,11 +11,17 @@ const databasePath = resolve(
 mkdirSync(dirname(databasePath), { recursive: true });
 
 const repository = new NotesRepository(databasePath);
-const app = createApp(repository);
+const host = process.env.HOST ?? '127.0.0.1';
+const token = process.env.API_TOKEN;
+if (!['127.0.0.1', 'localhost', '::1'].includes(host) && !token) {
+  repository.close();
+  throw new Error('Set API_TOKEN before exposing the server beyond localhost.');
+}
+const app = createApp(repository, {token});
 const port = Number(process.env.PORT ?? 4000);
 
 const server = Bun.serve({
-  hostname: process.env.HOST ?? '127.0.0.1',
+  hostname: host,
   port,
   fetch: app.fetch,
 });

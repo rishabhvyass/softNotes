@@ -79,6 +79,16 @@ describe('Soft Notes API', () => {
     expect(await response.text()).toBe('');
   });
 
+  test('protects notes, sync, and exports when an API token is configured', async () => {
+    const protectedApp = createApp(repository, {token: 'test-only-token'});
+    for (const path of ['/api/notes', '/api/sync', '/api/export']) {
+      expect((await protectedApp.fetch(new Request(`http://local${path}`))).status).toBe(401);
+      expect((await protectedApp.fetch(new Request(`http://local${path}`, {headers: {Authorization: 'Bearer wrong'}}))).status).toBe(401);
+      expect((await protectedApp.fetch(new Request(`http://local${path}`, {headers: {Authorization: 'Bearer test-only-token'}}))).status).toBe(200);
+    }
+    expect((await protectedApp.fetch(new Request('http://local/health'))).status).toBe(200);
+  });
+
   test('keeps permanent deletion IDs so an offline device cannot resurrect a note', async () => {
     const draft = {id: 'offline-note', title: 'Private', body: 'Content', icon: 'heart', accent: '#FF8FB4'};
     repository.create(draft as never);

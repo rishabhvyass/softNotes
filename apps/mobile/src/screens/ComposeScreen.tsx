@@ -168,7 +168,7 @@ function IconPicker({
         </PressableScale>
       </View>
 
-      <View style={styles.pickerContent}>
+      <ScrollView style={styles.pickerScroll} contentContainerStyle={styles.pickerContent} showsVerticalScrollIndicator={false}>
         <Text style={[styles.pickerTitle, {color: theme.colors.text}]}>Select an icon{`\n`}for your note</Text>
         <Animated.View key={`${icon}-${accent}`} entering={FadeIn.duration(180)} style={styles.preview}>
           <NoteGlyph icon={icon} accent={accent} size={76} selected />
@@ -193,7 +193,7 @@ function IconPicker({
             );
           })}
         </View>
-      </View>
+      </ScrollView>
 
       <RoundAction label="Continue to write" onPress={onContinue} icon="arrow" bottom={0} />
     </Animated.View>
@@ -405,7 +405,8 @@ const styles = StyleSheet.create({
   kicker: {fontSize: 11, fontWeight: '600'},
   headerTitle: {fontSize: 13, fontWeight: '700', marginTop: 2},
   closeButton: {width: 42, height: 42, borderRadius: 21, alignItems: 'center', justifyContent: 'center'},
-  pickerContent: {flex: 1, alignItems: 'center', justifyContent: 'center', paddingBottom: 40},
+  pickerScroll: {flex: 1},
+  pickerContent: {flexGrow: 1, alignItems: 'center', justifyContent: 'center', paddingVertical: 24},
   pickerTitle: {fontSize: 27, lineHeight: 31, fontWeight: '700', textAlign: 'center', letterSpacing: -0.7},
   preview: {marginTop: 22, marginBottom: 28},
   iconGrid: {width: 282, flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: 10},

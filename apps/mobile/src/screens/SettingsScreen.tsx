@@ -37,6 +37,7 @@ export function SettingsScreen({
   const haptic = useHaptics();
   const store = useNotes();
   const [apiUrl, setApiUrl] = useState(store.settings.apiUrl);
+  const [apiToken, setApiToken] = useState(store.settings.apiToken ?? '');
 
   const applyApiUrl = () => {
     const normalized = apiUrl.trim().replace(/\/$/, '');
@@ -150,6 +151,12 @@ export function SettingsScreen({
             style={[styles.urlInput, {backgroundColor: theme.colors.surfaceMuted, color: theme.colors.text}]}
           />
           <Text style={[styles.serverHint, {color: theme.colors.textMuted}]}>Use your Mac’s LAN address when testing on a physical phone.</Text>
+          <TextInput accessibilityLabel="API token" value={apiToken} onChangeText={setApiToken}
+            placeholder="API token (required for LAN sync)" placeholderTextColor={theme.colors.textFaint}
+            secureTextEntry autoCapitalize="none" autoCorrect={false}
+            onBlur={() => store.updateSettings({apiToken: apiToken.trim()})}
+            style={[styles.urlInput, styles.tokenInput, {backgroundColor: theme.colors.surfaceMuted, color: theme.colors.text}]} />
+          <Text style={[styles.serverHint, {color: theme.colors.textMuted}]}>The token is stored on this device, outside JSON backups. Use HTTPS for sync outside a trusted local network.</Text>
         </View>
 
         <SectionTitle label="Library" />
@@ -223,6 +230,7 @@ const styles = StyleSheet.create({
   settingHelper: {fontSize: 11, marginTop: 3},
   serverLabel: {flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 12},
   urlInput: {height: 48, borderRadius: 14, paddingHorizontal: 13, fontSize: 13},
+  tokenInput: {marginTop: 14},
   serverHint: {fontSize: 11, lineHeight: 16, marginTop: 9},
   libraryGrid: {flexDirection: 'row', gap: 10},
   libraryButton: {height: 104, borderRadius: 22, borderWidth: StyleSheet.hairlineWidth, padding: 14, justifyContent: 'space-between'},

@@ -54,6 +54,7 @@ export type ThemePreference = 'system' | 'light' | 'dark';
 
 export type AppSettings = {
   apiUrl: string;
+  apiToken?: string;
   hapticsEnabled: boolean;
   theme: ThemePreference;
 };

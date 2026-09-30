@@ -123,11 +123,11 @@ export function NotesProvider({children}: {children: React.ReactNode}) {
     dispatch({type: 'sync', status: 'syncing', error: null});
 
     try {
-      const remote = await notesApi.snapshot(snapshot.settings.apiUrl);
+      const remote = await notesApi.snapshot(snapshot.settings.apiUrl, snapshot.settings.apiToken);
       const deletedIds = new Set(remote.deletedIds);
 
       for (const id of snapshot.pendingDeletions) {
-        await notesApi.deleteForever(snapshot.settings.apiUrl, id);
+        await notesApi.deleteForever(snapshot.settings.apiUrl, id, snapshot.settings.apiToken);
       }
 
       for (const note of snapshot.notes) {
@@ -135,9 +135,9 @@ export function NotesProvider({children}: {children: React.ReactNode}) {
         const remoteNote = remote.notes.find(candidate => candidate.id === note.id);
         try {
           if (!remoteNote) {
-            await notesApi.create(snapshot.settings.apiUrl, note);
+            await notesApi.create(snapshot.settings.apiUrl, note, snapshot.settings.apiToken);
           } else if (Date.parse(note.updatedAt) > Date.parse(remoteNote.updatedAt)) {
-            await notesApi.update(snapshot.settings.apiUrl, note);
+            await notesApi.update(snapshot.settings.apiUrl, note, snapshot.settings.apiToken);
           }
         } catch (error) {
           // Another device may permanently delete a note during this upload.
@@ -145,7 +145,7 @@ export function NotesProvider({children}: {children: React.ReactNode}) {
         }
       }
 
-      const refreshedRemote = await notesApi.snapshot(snapshot.settings.apiUrl);
+      const refreshedRemote = await notesApi.snapshot(snapshot.settings.apiUrl, snapshot.settings.apiToken);
       if (generation.current === currentGeneration) {
         dispatch({
           type: 'syncMerge',
@@ -180,7 +180,7 @@ export function NotesProvider({children}: {children: React.ReactNode}) {
 
   useEffect(() => {
     if (state.hydrated) syncNow();
-  }, [state.hydrated, syncNow]);
+  }, [state.hydrated, state.settings.apiUrl, state.settings.apiToken, syncNow]);
 
   useEffect(() => {
     const subscription = AppState.addEventListener('change', nextState => {
@@ -254,7 +254,7 @@ export function NotesProvider({children}: {children: React.ReactNode}) {
   );
 
   const updateSettings = useCallback((patch: Partial<AppSettings>) => {
-    if (patch.apiUrl) generation.current += 1;
+    if (patch.apiUrl || patch.apiToken !== undefined) generation.current += 1;
     dispatch({type: 'settings', patch});
   }, []);
 
