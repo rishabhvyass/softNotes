@@ -11,7 +11,8 @@ import {HomeScreen} from './src/screens/HomeScreen';
 import {NoteDetailScreen} from './src/screens/NoteDetailScreen';
 import {SearchScreen} from './src/screens/SearchScreen';
 import {SettingsScreen} from './src/screens/SettingsScreen';
-import {NotesProvider} from './src/store/NotesProvider';
+import {SplashOverlay} from './src/components/SplashOverlay';
+import {NotesProvider, useNotes} from './src/store/NotesProvider';
 import {useAppTheme} from './src/theme/theme';
 import type {Note} from './src/types/note';
 
@@ -43,6 +44,7 @@ function AppNavigator() {
   const theme = useAppTheme();
   const insets = useSafeAreaInsets();
   const reduceMotion = useReducedMotion();
+  const {hydrated} = useNotes();
   const [stack, setStack] = useState<Route[]>([{name: 'home'}]);
   const route = stack[stack.length - 1] ?? {name: 'home'};
 
@@ -152,6 +154,7 @@ function AppNavigator() {
           />
         </Animated.View>
       )}
+      <SplashOverlay ready={hydrated} />
     </View>
   );
 }
