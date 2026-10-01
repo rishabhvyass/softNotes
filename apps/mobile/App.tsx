@@ -1,7 +1,7 @@
-import React, {useCallback, useEffect, useState} from 'react';
+import React, {useCallback, useEffect, useRef, useState} from 'react';
 import {BackHandler, StatusBar, StyleSheet, View} from 'react-native';
 import {GestureHandlerRootView} from 'react-native-gesture-handler';
-import Animated, {FadeInRight, FadeOutLeft, useReducedMotion} from 'react-native-reanimated';
+import Animated, {FadeIn, FadeInLeft, FadeInRight, FadeOut, useReducedMotion} from 'react-native-reanimated';
 import {SafeAreaProvider, useSafeAreaInsets} from 'react-native-safe-area-context';
 import {CollectionScreen} from './src/screens/CollectionScreen';
 import {BackupScreen} from './src/screens/BackupScreen';
@@ -45,14 +45,28 @@ function AppNavigator() {
   const [stack, setStack] = useState<Route[]>([{name: 'home'}]);
   const route = stack[stack.length - 1] ?? {name: 'home'};
 
+  // Direction of the latest navigation, read by the incoming screen's `entering`.
+  const transition = useRef<'push' | 'pop' | 'swap'>('swap');
+
   const navigate = useCallback((next: Route) => {
+    transition.current = 'push';
     setStack(current => [...current, next]);
   }, []);
-  const replaceRoot = useCallback((next: Route) => setStack([next]), []);
+  const replaceRoot = useCallback((next: Route) => {
+    transition.current = 'swap';
+    setStack([next]);
+  }, []);
   const goBack = useCallback(() => {
+    transition.current = 'pop';
     setStack(current => (current.length > 1 ? current.slice(0, -1) : [{name: 'home'}]));
   }, []);
   const openNote = useCallback((note: Note) => navigate({name: 'detail', noteId: note.id}), [navigate]);
+  const entering =
+    transition.current === 'push'
+      ? FadeInRight.duration(260)
+      : transition.current === 'pop'
+        ? FadeInLeft.duration(260)
+        : FadeIn.duration(220);
   const routeKey = route.name === 'detail' ? `${route.name}-${route.noteId}` : route.name;
 
   useEffect(() => {
@@ -71,8 +85,8 @@ function AppNavigator() {
       />
       <Animated.View
         key={routeKey}
-        entering={reduceMotion ? undefined : FadeInRight.duration(280)}
-        exiting={reduceMotion ? undefined : FadeOutLeft.duration(180)}
+        entering={reduceMotion ? undefined : entering}
+        exiting={reduceMotion ? undefined : FadeOut.duration(120)}
         style={styles.flex}>
         {route.name === 'home' && (
           <HomeScreen

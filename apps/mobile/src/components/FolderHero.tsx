@@ -8,7 +8,6 @@ import Animated, {
   useSharedValue,
   withDelay,
   withRepeat,
-  withSequence,
   withTiming,
 } from 'react-native-reanimated';
 import {useAppTheme} from '../theme/theme';
@@ -23,14 +22,7 @@ const AnimatedGlyph = ({note, delay, position}: {note: Note; delay: number; posi
     if (reduceMotion) return;
     float.value = withDelay(
       delay,
-      withRepeat(
-        withSequence(
-          withTiming(-6, {duration: 1600, easing: Easing.inOut(Easing.quad)}),
-          withTiming(1, {duration: 1600, easing: Easing.inOut(Easing.quad)}),
-        ),
-        -1,
-        true,
-      ),
+      withRepeat(withTiming(-6, {duration: 1600, easing: Easing.inOut(Easing.quad)}), -1, true),
     );
     return () => cancelAnimation(float);
   }, [delay, float, reduceMotion]);

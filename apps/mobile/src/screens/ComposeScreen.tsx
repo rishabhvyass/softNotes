@@ -351,14 +351,18 @@ function SaveAnimation({
   const theme = useAppTheme();
   const reduceMotion = useReducedMotion();
   const progress = useSharedValue(0);
+  // Keep the latest callback in a ref so parent re-renders (new inline function
+  // identities) never restart the timeline or its completion timer.
+  const finishedRef = useRef(onFinished);
+  finishedRef.current = onFinished;
 
   useEffect(() => {
     progress.value = reduceMotion
       ? withTiming(1, {duration: 120})
       : withTiming(1, {duration: 900, easing: Easing.inOut(Easing.cubic)});
-    const timeout = setTimeout(onFinished, reduceMotion ? 220 : 1050);
+    const timeout = setTimeout(() => finishedRef.current(), reduceMotion ? 220 : 1050);
     return () => clearTimeout(timeout);
-  }, [onFinished, progress, reduceMotion]);
+  }, [progress, reduceMotion]);
 
   const paperStyle = useAnimatedStyle(() => ({
     opacity: interpolate(progress.value, [0, 0.82, 1], [1, 1, 0]),
