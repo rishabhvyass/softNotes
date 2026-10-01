@@ -2,7 +2,6 @@ import {IconSearch} from '@tabler/icons-react-native';
 import React from 'react';
 import {ScrollView, StyleSheet, Text, View} from 'react-native';
 import type {EdgeInsets} from 'react-native-safe-area-context';
-import {FloatingDock, type MainTab} from '../components/FloatingDock';
 import {FolderHero} from '../components/FolderHero';
 import {NoteRow} from '../components/NoteRow';
 import {PressableScale} from '../components/PressableScale';
@@ -15,15 +14,11 @@ import {formatHeaderDate} from '../utils/date';
 
 export function HomeScreen({
   insets,
-  onTab,
-  onCreate,
   onOpenNote,
   onSearch,
   onSeeAll,
 }: {
   insets: EdgeInsets;
-  onTab(tab: MainTab): void;
-  onCreate(): void;
   onOpenNote(note: Note): void;
   onSearch(): void;
   onSeeAll(): void;
@@ -79,7 +74,6 @@ export function HomeScreen({
           </View>
         )}
       </ScrollView>
-      <FloatingDock active="home" bottom={insets.bottom} onTab={onTab} onCreate={onCreate} />
     </View>
   );
 }

@@ -1,8 +1,9 @@
 import React, {useCallback, useEffect, useRef, useState} from 'react';
 import {BackHandler, StatusBar, StyleSheet, View} from 'react-native';
 import {GestureHandlerRootView} from 'react-native-gesture-handler';
-import Animated, {FadeIn, FadeInLeft, FadeInRight, FadeOut, useReducedMotion} from 'react-native-reanimated';
+import Animated, {FadeIn, FadeInDown, FadeOutDown, FadeInLeft, FadeInRight, FadeOut, useReducedMotion} from 'react-native-reanimated';
 import {SafeAreaProvider, useSafeAreaInsets} from 'react-native-safe-area-context';
+import {FloatingDock} from './src/components/FloatingDock';
 import {CollectionScreen} from './src/screens/CollectionScreen';
 import {BackupScreen} from './src/screens/BackupScreen';
 import {ComposeScreen} from './src/screens/ComposeScreen';
@@ -91,8 +92,6 @@ function AppNavigator() {
         {route.name === 'home' && (
           <HomeScreen
             insets={insets}
-            onTab={tab => replaceRoot({name: tab})}
-            onCreate={() => navigate({name: 'compose'})}
             onOpenNote={openNote}
             onSearch={() => navigate({name: 'search'})}
             onSeeAll={() => navigate({name: 'all'})}
@@ -102,9 +101,6 @@ function AppNavigator() {
           <CollectionScreen
             scope="saved"
             insets={insets}
-            showDock
-            onTab={tab => replaceRoot({name: tab})}
-            onCreate={() => navigate({name: 'compose'})}
             onOpenNote={openNote}
             onSettings={() => navigate({name: 'settings'})}
           />
@@ -142,6 +138,20 @@ function AppNavigator() {
         )}
         {route.name === 'backup' && <BackupScreen insets={insets} onBack={goBack} />}
       </Animated.View>
+      {(route.name === 'home' || route.name === 'saved') && (
+        <Animated.View
+          pointerEvents="box-none"
+          style={StyleSheet.absoluteFill}
+          entering={reduceMotion ? undefined : FadeInDown.duration(220)}
+          exiting={reduceMotion ? undefined : FadeOutDown.duration(140)}>
+          <FloatingDock
+            active={route.name}
+            bottom={insets.bottom}
+            onTab={tab => replaceRoot({name: tab})}
+            onCreate={() => navigate({name: 'compose'})}
+          />
+        </Animated.View>
+      )}
     </View>
   );
 }

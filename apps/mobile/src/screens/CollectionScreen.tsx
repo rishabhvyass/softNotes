@@ -2,7 +2,6 @@ import {IconChevronLeft, IconSettings} from '@tabler/icons-react-native';
 import React, {useState} from 'react';
 import {ScrollView, StyleSheet, Text, View} from 'react-native';
 import type {EdgeInsets} from 'react-native-safe-area-context';
-import {FloatingDock, type MainTab} from '../components/FloatingDock';
 import {NoteActionsSheet} from '../components/NoteActionsSheet';
 import {NoteRow} from '../components/NoteRow';
 import {PressableScale} from '../components/PressableScale';
@@ -23,19 +22,13 @@ const copy: Record<CollectionScope, {title: string; emptyTitle: string; emptyMes
 export function CollectionScreen({
   scope,
   insets,
-  showDock = false,
   onBack,
-  onTab,
-  onCreate,
   onOpenNote,
   onSettings,
 }: {
   scope: CollectionScope;
   insets: EdgeInsets;
-  showDock?: boolean;
   onBack?(): void;
-  onTab?(tab: MainTab): void;
-  onCreate?(): void;
   onOpenNote(note: Note): void;
   onSettings?(): void;
 }) {
@@ -54,7 +47,7 @@ export function CollectionScreen({
         showsVerticalScrollIndicator={false}
         contentContainerStyle={[
           styles.content,
-          {paddingTop: insets.top + 12, paddingBottom: insets.bottom + (showDock ? 130 : 34)},
+          {paddingTop: insets.top + 12, paddingBottom: insets.bottom + (scope === 'saved' ? 130 : 34)},
         ]}>
         <View style={styles.header}>
           {onBack ? (
@@ -98,10 +91,6 @@ export function CollectionScreen({
           </View>
         )}
       </ScrollView>
-
-      {showDock && onTab && onCreate && (
-        <FloatingDock active="saved" bottom={insets.bottom} onTab={onTab} onCreate={onCreate} />
-      )}
 
       <NoteActionsSheet
         note={actionNote}
